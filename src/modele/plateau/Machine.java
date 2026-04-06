@@ -32,6 +32,10 @@ public abstract class Machine implements Runnable {
         return d;
     }
 
+    public void setDirection(Direction d) {
+        this.d = d;
+    }
+
     public Item getCurrent() {
         if (current.size() > 0) {
             return current.get(0);
@@ -52,6 +56,20 @@ public abstract class Machine implements Runnable {
         return current.isEmpty();
     }
 
+    // Can this machine accept an item coming from direction senderDir?
+    // Override in machines with multiple input slots.
+    public boolean hasPlaceFor(Direction senderDir) {
+        return hasPlace();
+    }
+
+    // Deliver an item to this machine from the given sender direction.
+    // Returns true if movedThisTick should be set, false if not needed.
+    // Override to route items to custom slots instead of current.
+    public boolean receive(Item item, Direction senderDir) {
+        current.add(item);
+        return true;
+    }
+
     public void send() {
         if (movedThisTick) return;
 
@@ -60,19 +78,18 @@ public abstract class Machine implements Runnable {
         if (nextCase != null) {
             Machine nextMachine = nextCase.getMachine();
 
-            if (nextMachine != null && !current.isEmpty() && nextMachine.hasPlace()) {
+            if (nextMachine != null && !current.isEmpty() && nextMachine.hasPlaceFor(d)) {
                 Item item = current.getFirst();
-                nextMachine.current.add(item);
-                nextMachine.movedThisTick = true;
+                boolean setFlag = nextMachine.receive(item, d);
+                if (setFlag) nextMachine.movedThisTick = true;
                 current.remove(item);
                 System.out.println("Envoi d'un item vers " + d);
             } else if (current.size() > 0 && nextMachine == null) {
                 System.out.println("Item bloqué : pas de machine devant");
-            } else if (current.size() > 0 && nextMachine != null && !nextMachine.hasPlace()) {
+            } else if (current.size() > 0 && nextMachine != null && !nextMachine.hasPlaceFor(d)) {
                 System.out.println("Item bloqué : machine suivante pleine");
             }
         } else {
-            // BORD DE LA GRILLE : l'item reste sur place
             if (!current.isEmpty()) {
                 System.out.println("Item bloqué : bord de la carte");
             }

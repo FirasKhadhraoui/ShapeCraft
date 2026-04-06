@@ -120,7 +120,7 @@ public class ImagePanel extends JPanel {
 
     private void setColor(Graphics g, modele.item.Color color) {
         if (color == null) {
-            g.setColor(Color.GRAY);
+            g.setColor(new Color(64, 64, 64)); // dark grey
         } else {
             switch (color) {
                 case Red: g.setColor(Color.RED); break;

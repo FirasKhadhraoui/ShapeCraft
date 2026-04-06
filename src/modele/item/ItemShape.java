@@ -202,7 +202,7 @@ public class ItemShape extends Item {
 
     public void Color(Color c) {
         for (int i = 0; i < tabColors.length; i++) {
-            if (tabColors[i] != null) {
+            if (tabSubShapes[i] != SubShape.None) {
                 tabColors[i] = c;
             }
         }

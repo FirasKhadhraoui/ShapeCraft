@@ -10,6 +10,7 @@ import javax.swing.*;
 import modele.item.Item;
 import modele.item.ItemColor;
 import modele.item.ItemShape;
+import modele.item.SubShape;
 import modele.jeu.Jeu;
 import modele.plateau.*;
 import modele.plateau.Direction;
@@ -26,6 +27,11 @@ public class VueControleur extends JFrame implements Observer {
     private Image icoGreen;
     private Image icoBlue;
     private Image icoYellow;
+
+    // Images pour les zones de formes
+    private Image icoSquare;
+    private Image icoCircle;
+    private Image icoStar;
 
     // Images pour les machines
     private Image icoTapis;
@@ -94,6 +100,10 @@ public class VueControleur extends JFrame implements Observer {
         icoGreen = new ImageIcon("./data/sprites/colors/green.png").getImage();
         icoBlue = new ImageIcon("./data/sprites/colors/blue.png").getImage();
         icoYellow = new ImageIcon("./data/sprites/colors/yellow.png").getImage();
+
+        icoSquare = new ImageIcon("./data/sprites/shapes/square.png").getImage();
+        icoCircle = new ImageIcon("./data/sprites/shapes/circle.png").getImage();
+        icoStar   = new ImageIcon("./data/sprites/shapes/star.png").getImage();
 
         // Images pour les machines
         icoTapis = new ImageIcon("./data/sprites/buildings/belt_top.png").getImage();
@@ -249,12 +259,12 @@ public class VueControleur extends JFrame implements Observer {
                     public void mouseClicked(MouseEvent e) {
                         if (SwingUtilities.isRightMouseButton(e)) {
                             jeu.supprimerMachine(xx, yy);
-                            System.out.println("Supprimer machine à " + xx + "-" + yy);
                         } else if (machineSelectionnee.equals("Tapis")) {
                             jeu.placerMachine(xx, yy, "Tapis", currentDragDirection);
+                        } else if (machineSelectionnee.equals("Mine") && plateau.getCases()[xx][yy].getMachine() instanceof Mine) {
+                            jeu.rotateMine(xx, yy);
                         } else {
                             jeu.placerMachine(xx, yy, machineSelectionnee);
-                            System.out.println("Placer " + machineSelectionnee + " à " + xx + "-" + yy);
                         }
                     }
 
@@ -297,6 +307,8 @@ public class VueControleur extends JFrame implements Observer {
                             lastBeltX = xx;
                             lastBeltY = yy;
                             jeu.placerMachine(xx, yy, "Tapis", Direction.North);
+                        } else if (machineSelectionnee.equals("Mine") && plateau.getCases()[xx][yy].getMachine() instanceof Mine) {
+                            // skip — mouseClicked handles rotation
                         } else {
                             jeu.placerMachine(xx, yy, machineSelectionnee);
                         }
@@ -324,6 +336,16 @@ public class VueControleur extends JFrame implements Observer {
         add(mainPanel);
         pack();
         setLocationRelativeTo(null);
+    }
+
+    private Image getShapeIcon(ItemShape shape) {
+        SubShape[] subs = shape.getSubShapes(ItemShape.Layer.one);
+        for (SubShape s : subs) {
+            if (s == SubShape.Carre)  return icoSquare;
+            if (s == SubShape.Circle) return icoCircle;
+            if (s == SubShape.Star)   return icoStar;
+        }
+        return null;
     }
 
     private Direction computeBeltDirection(int fromX, int fromY, int toX, int toY) {
@@ -362,11 +384,11 @@ public class VueControleur extends JFrame implements Observer {
             if (incoming == Direction.South) return Math.PI;
             return 3 * Math.PI / 2; // West
         } else {
-            // Left turns: N→W=0, W→S=90°, S→E=180°, E→N=270°
+            // Left turns: N→W=0, E→N=90°, S→E=180°, W→S=270°
             if (incoming == Direction.North) return 0;
-            if (incoming == Direction.West)  return Math.PI / 2;
+            if (incoming == Direction.East)  return Math.PI / 2;
             if (incoming == Direction.South) return Math.PI;
-            return 3 * Math.PI / 2; // East
+            return 3 * Math.PI / 2; // West→S
         }
     }
 
@@ -405,6 +427,7 @@ public class VueControleur extends JFrame implements Observer {
                     } else if (m instanceof Poubelle) {
                         tabIP[x][y].setImageBackground(icoPoubelle);
                     } else if (m instanceof Mine) {
+                        tabIP[x][y].setBackgroundRotation(directionToRotation(m.getDirection()));
                         tabIP[x][y].setImageBackground(icoMine);
                     } else if (m instanceof Livraison) {
                         tabIP[x][y].setImageBackground(icoHub);
@@ -420,12 +443,22 @@ public class VueControleur extends JFrame implements Observer {
 
                     Item current = m.getCurrent();
                     if (current instanceof ItemShape) {
-                        tabIP[x][y].setShape((ItemShape) current);
+                        Image icon = getShapeIcon((ItemShape) current);
+                        tabIP[x][y].setFront(icon);
                     } else {
-                        tabIP[x][y].setShape(null);
+                        tabIP[x][y].setFront(null);
                     }
                 } else {
-                    tabIP[x][y].setShape(null);
+                    // Show shape zone images at 50% size (setFront draws in center area)
+                    int midX = sizeX / 2 - 1;
+                    int midY = sizeY / 2 - 1;
+                    if (x >= midX && x <= midX + 2 && y < 3) {
+                        tabIP[x][y].setFront(icoSquare);
+                    } else if (x >= midX && x <= midX + 2 && y >= sizeY - 3) {
+                        tabIP[x][y].setFront(icoStar);
+                    } else if (x < 3 && y >= midY && y <= midY + 2) {
+                        tabIP[x][y].setFront(icoCircle);
+                    }
                 }
             }
         }

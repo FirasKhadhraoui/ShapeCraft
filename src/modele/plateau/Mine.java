@@ -10,8 +10,8 @@ public class Mine extends Machine {
     public void work() {
         if (c.getGisement() != null) {
             compteur++;
-            if (compteur >= DELAI_PRODUCTION) {
-                current.add((ItemShape) c.getGisement());
+            if (compteur >= DELAI_PRODUCTION && hasPlace()) {
+                current.add(new ItemShape(((ItemShape) c.getGisement()).toString()));
                 compteur = 0;
                 System.out.println("Mine : production d'un item");
             }

@@ -43,6 +43,22 @@ public class Plateau extends Observable implements Runnable {
                 grilleCases[SIZE_X - 1 - i][SIZE_Y - 1 - j].setGisement(new ItemShape("cycycycy"));
             }
         }
+
+        // Gisements de formes au milieu de chaque bord (zones 3x3)
+        int midX = SIZE_X / 2 - 1; // = 7
+        int midY = SIZE_Y / 2 - 1; // = 7
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                // Bord haut (Nord) : Carrés (gris foncé)
+                grilleCases[midX + i][j].setGisement(new ItemShape("C-C-C-C-"));
+
+                // Bord bas (Sud) : Étoiles (gris foncé)
+                grilleCases[midX + i][SIZE_Y - 1 - j].setGisement(new ItemShape("S-S-S-S-"));
+
+                // Bord gauche (Ouest) : Cercles (gris foncé)
+                grilleCases[i][midY + j].setGisement(new ItemShape("c-c-c-c-"));
+            }
+        }
     }
 
     public Case[][] getCases() {

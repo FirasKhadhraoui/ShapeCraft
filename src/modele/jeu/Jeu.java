@@ -116,6 +116,19 @@ public class Jeu extends Thread{
         plateau.setMachine(x, y, new Tapis(incoming, outgoing));
     }
 
+    public void rotateMine(int x, int y) {
+        Machine m = plateau.getCases()[x][y].getMachine();
+        if (!(m instanceof Mine)) return;
+        Direction[] dirs = {Direction.North, Direction.East, Direction.South, Direction.West};
+        Direction cur = m.getDirection();
+        int idx = 0;
+        for (int i = 0; i < dirs.length; i++) {
+            if (dirs[i] == cur) { idx = i; break; }
+        }
+        m.setDirection(dirs[(idx + 1) % 4]);
+        plateau.forceRefresh();
+    }
+
     public void supprimerMachine(int x, int y) {
         Case c = plateau.getCases()[x][y];
         Machine m = c.getMachine();
