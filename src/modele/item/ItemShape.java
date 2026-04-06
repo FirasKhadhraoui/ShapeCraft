@@ -4,10 +4,12 @@ public class ItemShape extends Item {
     private SubShape[] tabSubShapes;
     private Color[] tabColors;
     private boolean colorItem = false; // true for items from color gisements (corners)
+    private boolean cut = false;       // true after Cut() is called
     public enum Layer {one, two, three};
 
     public boolean isColorItem() { return colorItem; }
     public void setColorItem(boolean b) { this.colorItem = b; }
+    public boolean isCut() { return cut; }
 
     public SubShape[] getSubShapes(Layer l) {
         switch(l) {
@@ -169,6 +171,8 @@ public class ItemShape extends Item {
 
         this.tabSubShapes = formeBas.tabSubShapes;
         this.tabColors = formeBas.tabColors;
+        this.cut = true;
+        formeHaut.cut = true;
 
         return formeHaut;
     }

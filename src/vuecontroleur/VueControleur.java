@@ -485,8 +485,12 @@ public class VueControleur extends JFrame implements Observer {
                     Item current = m.getCurrent();
                     if (current instanceof ItemShape) {
                         ItemShape is = (ItemShape) current;
-                        tabIP[x][y].setFront(getItemImage(is));
-                        tabIP[x][y].setFrontTint(getItemTint(is));
+                        if (is.isCut()) {
+                            tabIP[x][y].setShape(is);
+                        } else {
+                            tabIP[x][y].setFront(getItemImage(is));
+                            tabIP[x][y].setFrontTint(getItemTint(is));
+                        }
                     }
                 } else {
                     // Show shape zone images at 50% size (setFront draws in center area)
