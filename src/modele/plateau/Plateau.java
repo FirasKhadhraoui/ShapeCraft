@@ -30,17 +30,15 @@ public class Plateau extends Observable implements Runnable {
         // Gisements de couleur dans les coins (zones 2x2)
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 2; j++) {
-                // Coin haut-gauche : Rouge (Cercles rouges)
-                grilleCases[i][j].setGisement(new ItemShape("crcrcrcr"));
+                ItemShape red    = new ItemShape("crcrcrcr"); red.setColorItem(true);
+                ItemShape green  = new ItemShape("cgcgcgcg"); green.setColorItem(true);
+                ItemShape blue   = new ItemShape("cbcbcbcb"); blue.setColorItem(true);
+                ItemShape yellow = new ItemShape("cycycycy"); yellow.setColorItem(true);
 
-                // Coin haut-droite : Vert (Cercles verts)
-                grilleCases[SIZE_X - 1 - i][j].setGisement(new ItemShape("cgcgcgcg"));
-
-                // Coin bas-gauche : Bleu (Cercles bleus)
-                grilleCases[i][SIZE_Y - 1 - j].setGisement(new ItemShape("cbcbcbcb"));
-
-                // Coin bas-droite : Jaune (Cercles jaunes)
-                grilleCases[SIZE_X - 1 - i][SIZE_Y - 1 - j].setGisement(new ItemShape("cycycycy"));
+                grilleCases[i][j].setGisement(red);
+                grilleCases[SIZE_X - 1 - i][j].setGisement(green);
+                grilleCases[i][SIZE_Y - 1 - j].setGisement(blue);
+                grilleCases[SIZE_X - 1 - i][SIZE_Y - 1 - j].setGisement(yellow);
             }
         }
 

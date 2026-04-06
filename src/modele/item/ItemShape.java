@@ -3,7 +3,11 @@ package modele.item;
 public class ItemShape extends Item {
     private SubShape[] tabSubShapes;
     private Color[] tabColors;
+    private boolean colorItem = false; // true for items from color gisements (corners)
     public enum Layer {one, two, three};
+
+    public boolean isColorItem() { return colorItem; }
+    public void setColorItem(boolean b) { this.colorItem = b; }
 
     public SubShape[] getSubShapes(Layer l) {
         switch(l) {

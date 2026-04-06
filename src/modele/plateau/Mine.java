@@ -11,7 +11,10 @@ public class Mine extends Machine {
         if (c.getGisement() != null) {
             compteur++;
             if (compteur >= DELAI_PRODUCTION && hasPlace()) {
-                current.add(new ItemShape(((ItemShape) c.getGisement()).toString()));
+                ItemShape gisement = (ItemShape) c.getGisement();
+                ItemShape produced = new ItemShape(gisement.toString());
+                produced.setColorItem(gisement.isColorItem());
+                current.add(produced);
                 compteur = 0;
                 System.out.println("Mine : production d'un item");
             }

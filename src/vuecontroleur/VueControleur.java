@@ -338,14 +338,53 @@ public class VueControleur extends JFrame implements Observer {
         setLocationRelativeTo(null);
     }
 
-    private Image getShapeIcon(ItemShape shape) {
-        SubShape[] subs = shape.getSubShapes(ItemShape.Layer.one);
-        for (SubShape s : subs) {
+    private boolean isColorItem(ItemShape shape) {
+        return shape.isColorItem();
+    }
+
+    private Image getItemImage(ItemShape shape) {
+        // Pure color item (4 circles same color) → color icon
+        if (isColorItem(shape)) {
+            switch (shape.getColors(ItemShape.Layer.one)[0]) {
+                case Red:    return icoRed;
+                case Green:  return icoGreen;
+                case Blue:   return icoBlue;
+                case Yellow: return icoYellow;
+                default: break;
+            }
+        }
+        // Shape item → shape PNG (tint applied separately)
+        for (SubShape s : shape.getSubShapes(ItemShape.Layer.one)) {
             if (s == SubShape.Carre)  return icoSquare;
             if (s == SubShape.Circle) return icoCircle;
             if (s == SubShape.Star)   return icoStar;
         }
         return null;
+    }
+
+    private java.awt.Color getItemTint(ItemShape shape) {
+        if (isColorItem(shape)) return null; // uses color icon directly, no tint
+        modele.item.Color[] colors = shape.getColors(ItemShape.Layer.one);
+        SubShape[] subs = shape.getSubShapes(ItemShape.Layer.one);
+        for (int i = 0; i < 4; i++) {
+            if (subs[i] != SubShape.None && colors[i] != null) {
+                return toAwtColor(colors[i]);
+            }
+        }
+        return null; // uncolored — show shape PNG as-is
+    }
+
+    private java.awt.Color toAwtColor(modele.item.Color c) {
+        switch (c) {
+            case Red:    return java.awt.Color.RED;
+            case Green:  return java.awt.Color.GREEN;
+            case Blue:   return java.awt.Color.BLUE;
+            case Yellow: return java.awt.Color.YELLOW;
+            case Purple: return java.awt.Color.MAGENTA;
+            case Cyan:   return java.awt.Color.CYAN;
+            case White:  return java.awt.Color.WHITE;
+            default:     return java.awt.Color.GRAY;
+        }
     }
 
     private Direction computeBeltDirection(int fromX, int fromY, int toX, int toY) {
@@ -397,6 +436,8 @@ public class VueControleur extends JFrame implements Observer {
             for (int y = 0; y < sizeY; y++) {
                 tabIP[x][y].setImageBackground(null);
                 tabIP[x][y].setFront(null);
+                tabIP[x][y].setFrontTint(null);
+                tabIP[x][y].setShape(null);
                 tabIP[x][y].setBackgroundRotation(0);
 
                 // Affichage des couleurs aux 4 coins de la grille (2x2)
@@ -443,10 +484,9 @@ public class VueControleur extends JFrame implements Observer {
 
                     Item current = m.getCurrent();
                     if (current instanceof ItemShape) {
-                        Image icon = getShapeIcon((ItemShape) current);
-                        tabIP[x][y].setFront(icon);
-                    } else {
-                        tabIP[x][y].setFront(null);
+                        ItemShape is = (ItemShape) current;
+                        tabIP[x][y].setFront(getItemImage(is));
+                        tabIP[x][y].setFrontTint(getItemTint(is));
                     }
                 } else {
                     // Show shape zone images at 50% size (setFront draws in center area)

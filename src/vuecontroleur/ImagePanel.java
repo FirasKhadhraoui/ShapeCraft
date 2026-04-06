@@ -5,12 +5,19 @@ import modele.item.SubShape;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class ImagePanel extends JPanel {
     private Image imgBackground;
     private Image imgFront;
+    private Color frontTint = null;
     private ItemShape shape;
     private double backgroundRotation = 0;
+
+    public void setFrontTint(Color tint) {
+        this.frontTint = tint;
+        repaint();
+    }
 
     public void setShape(ItemShape _shape) {
         this.shape = _shape;
@@ -66,7 +73,19 @@ public class ImagePanel extends JPanel {
         }
 
         if (imgFront != null) {
-            g.drawImage(imgFront, xFront, yFront, widthFront, heigthFront, this);
+            if (frontTint != null) {
+                // Draw shape PNG tinted with paint color using SRC_IN compositing
+                BufferedImage tinted = new BufferedImage(widthFront, heigthFront, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D tg = tinted.createGraphics();
+                tg.drawImage(imgFront, 0, 0, widthFront, heigthFront, null);
+                tg.setComposite(AlphaComposite.SrcIn);
+                tg.setColor(frontTint);
+                tg.fillRect(0, 0, widthFront, heigthFront);
+                tg.dispose();
+                g.drawImage(tinted, xFront, yFront, this);
+            } else {
+                g.drawImage(imgFront, xFront, yFront, widthFront, heigthFront, this);
+            }
         }
 
         if (shape != null) {
