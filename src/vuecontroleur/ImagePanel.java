@@ -8,14 +8,22 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 public class ImagePanel extends JPanel {
+    public enum CutHalf { NONE, LEFT, RIGHT }
+
     private Image imgBackground;
     private Image imgFront;
     private Color frontTint = null;
     private ItemShape shape;
     private double backgroundRotation = 0;
+    private CutHalf cutHalf = CutHalf.NONE;
 
     public void setFrontTint(Color tint) {
         this.frontTint = tint;
+        repaint();
+    }
+
+    public void setCutHalf(CutHalf ch) {
+        this.cutHalf = ch;
         repaint();
     }
 
@@ -73,8 +81,9 @@ public class ImagePanel extends JPanel {
         }
 
         if (imgFront != null) {
+            // Optionally tint the image first
+            Image drawImg = imgFront;
             if (frontTint != null) {
-                // Draw shape PNG tinted with paint color using SRC_IN compositing
                 BufferedImage tinted = new BufferedImage(widthFront, heigthFront, BufferedImage.TYPE_INT_ARGB);
                 Graphics2D tg = tinted.createGraphics();
                 tg.drawImage(imgFront, 0, 0, widthFront, heigthFront, null);
@@ -82,10 +91,21 @@ public class ImagePanel extends JPanel {
                 tg.setColor(frontTint);
                 tg.fillRect(0, 0, widthFront, heigthFront);
                 tg.dispose();
-                g.drawImage(tinted, xFront, yFront, this);
-            } else {
-                g.drawImage(imgFront, xFront, yFront, widthFront, heigthFront, this);
+                drawImg = tinted;
             }
+
+            Graphics2D g2d = (Graphics2D) g.create();
+            if (cutHalf == CutHalf.LEFT) {
+                g2d.clipRect(xFront, yFront, widthFront / 2, heigthFront);
+            } else if (cutHalf == CutHalf.RIGHT) {
+                g2d.clipRect(xFront + widthFront / 2, yFront, widthFront / 2, heigthFront);
+            }
+            if (frontTint != null) {
+                g2d.drawImage(drawImg, xFront, yFront, this);
+            } else {
+                g2d.drawImage(drawImg, xFront, yFront, widthFront, heigthFront, this);
+            }
+            g2d.dispose();
         }
 
         if (shape != null) {

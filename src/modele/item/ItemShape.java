@@ -10,6 +10,10 @@ public class ItemShape extends Item {
     public boolean isColorItem() { return colorItem; }
     public void setColorItem(boolean b) { this.colorItem = b; }
     public boolean isCut() { return cut; }
+    // Right half = indices 0,1 are filled; Left half = indices 2,3 are filled
+    public boolean isRightHalf() {
+        return cut && (tabSubShapes[0] != SubShape.None || tabSubShapes[1] != SubShape.None);
+    }
 
     public SubShape[] getSubShapes(Layer l) {
         switch(l) {

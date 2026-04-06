@@ -439,6 +439,7 @@ public class VueControleur extends JFrame implements Observer {
                 tabIP[x][y].setFrontTint(null);
                 tabIP[x][y].setShape(null);
                 tabIP[x][y].setBackgroundRotation(0);
+                tabIP[x][y].setCutHalf(ImagePanel.CutHalf.NONE);
 
                 // Affichage des couleurs aux 4 coins de la grille (2x2)
                 if (x < 2 && y < 2) {
@@ -485,11 +486,10 @@ public class VueControleur extends JFrame implements Observer {
                     Item current = m.getCurrent();
                     if (current instanceof ItemShape) {
                         ItemShape is = (ItemShape) current;
+                        tabIP[x][y].setFront(getItemImage(is));
+                        tabIP[x][y].setFrontTint(getItemTint(is));
                         if (is.isCut()) {
-                            tabIP[x][y].setShape(is);
-                        } else {
-                            tabIP[x][y].setFront(getItemImage(is));
-                            tabIP[x][y].setFrontTint(getItemTint(is));
+                            tabIP[x][y].setCutHalf(is.isRightHalf() ? ImagePanel.CutHalf.RIGHT : ImagePanel.CutHalf.LEFT);
                         }
                     }
                 } else {
