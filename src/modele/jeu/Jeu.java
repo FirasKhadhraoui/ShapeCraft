@@ -11,6 +11,7 @@ import modele.plateau.Rotator;
 import modele.plateau.AtelierPeinture;
 import modele.plateau.Stacker;
 import modele.plateau.Case;
+import modele.plateau.Direction;
 import modele.item.ItemShape;
 
 public class Jeu extends Thread{
@@ -96,6 +97,23 @@ public class Jeu extends Thread{
         if (nouvelleMachine != null) {
             plateau.setMachine(x, y, nouvelleMachine);
         }
+    }
+
+    public void placerMachine(int x, int y, String type, Direction direction) {
+        if (plateau.getCases()[x][y].getMachine() instanceof Livraison) {
+            System.out.println("Action impossible : Le Hub ne peut pas être remplacé.");
+            return;
+        }
+        if (!type.equals("Tapis")) {
+            placerMachine(x, y, type);
+            return;
+        }
+        plateau.setMachine(x, y, new Tapis(direction));
+    }
+
+    public void placerTapisCorner(int x, int y, Direction incoming, Direction outgoing) {
+        if (plateau.getCases()[x][y].getMachine() instanceof Livraison) return;
+        plateau.setMachine(x, y, new Tapis(incoming, outgoing));
     }
 
     public void supprimerMachine(int x, int y) {

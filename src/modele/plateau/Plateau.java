@@ -88,6 +88,15 @@ public class Plateau extends Observable implements Runnable {
 
     @Override
     public void run() {
+        // Reset tick flags so items that arrive this tick can't be forwarded again in the same tick
+        for (int x = 0; x < SIZE_X; x++) {
+            for (int y = 0; y < SIZE_Y; y++) {
+                Case c = grilleCases[x][y];
+                if (c.getMachine() != null) {
+                    c.getMachine().resetTickFlag();
+                }
+            }
+        }
         for (int x = 0; x < SIZE_X; x++) {
             for (int y = 0; y < SIZE_Y; y++) {
                 Case c = grilleCases[x][y];

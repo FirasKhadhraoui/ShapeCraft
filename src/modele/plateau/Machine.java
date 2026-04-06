@@ -9,9 +9,14 @@ public abstract class Machine implements Runnable {
     protected LinkedList<Item> current;
     protected Case c;
     protected Direction d = Direction.North;
+    protected boolean movedThisTick = false;
 
     public Machine() {
         current = new LinkedList<Item>();
+    }
+
+    public void resetTickFlag() {
+        movedThisTick = false;
     }
 
     public Machine(Item _item) {
@@ -21,6 +26,10 @@ public abstract class Machine implements Runnable {
 
     public void setCase(Case _c) {
         c = _c;
+    }
+
+    public Direction getDirection() {
+        return d;
     }
 
     public Item getCurrent() {
@@ -44,6 +53,8 @@ public abstract class Machine implements Runnable {
     }
 
     public void send() {
+        if (movedThisTick) return;
+
         Case nextCase = c.plateau.getCase(c, d);
 
         if (nextCase != null) {
@@ -52,6 +63,7 @@ public abstract class Machine implements Runnable {
             if (nextMachine != null && !current.isEmpty() && nextMachine.hasPlace()) {
                 Item item = current.getFirst();
                 nextMachine.current.add(item);
+                nextMachine.movedThisTick = true;
                 current.remove(item);
                 System.out.println("Envoi d'un item vers " + d);
             } else if (current.size() > 0 && nextMachine == null) {

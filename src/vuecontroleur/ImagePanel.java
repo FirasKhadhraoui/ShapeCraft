@@ -10,6 +10,7 @@ public class ImagePanel extends JPanel {
     private Image imgBackground;
     private Image imgFront;
     private ItemShape shape;
+    private double backgroundRotation = 0;
 
     public void setShape(ItemShape _shape) {
         this.shape = _shape;
@@ -18,6 +19,11 @@ public class ImagePanel extends JPanel {
 
     public void setImageBackground(Image _imgBackground) {
         this.imgBackground = _imgBackground;
+        repaint();
+    }
+
+    public void setBackgroundRotation(double radians) {
+        this.backgroundRotation = radians;
         repaint();
     }
 
@@ -47,7 +53,16 @@ public class ImagePanel extends JPanel {
         g.drawRoundRect(bordure, bordure, widthBack, heigthBack, bordure, bordure);
 
         if (imgBackground != null) {
-            g.drawImage(imgBackground, xBack, yBack, widthBack, heigthBack, this);
+            if (backgroundRotation == 0) {
+                g.drawImage(imgBackground, xBack, yBack, widthBack, heigthBack, this);
+            } else {
+                Graphics2D g2d = (Graphics2D) g.create();
+                double cx = xBack + widthBack / 2.0;
+                double cy = yBack + heigthBack / 2.0;
+                g2d.rotate(backgroundRotation, cx, cy);
+                g2d.drawImage(imgBackground, xBack, yBack, widthBack, heigthBack, this);
+                g2d.dispose();
+            }
         }
 
         if (imgFront != null) {

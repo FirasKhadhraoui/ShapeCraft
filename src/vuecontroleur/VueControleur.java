@@ -12,6 +12,7 @@ import modele.item.ItemColor;
 import modele.item.ItemShape;
 import modele.jeu.Jeu;
 import modele.plateau.*;
+import modele.plateau.Direction;
 
 public class VueControleur extends JFrame implements Observer {
     private Plateau plateau;
@@ -28,6 +29,8 @@ public class VueControleur extends JFrame implements Observer {
 
     // Images pour les machines
     private Image icoTapis;
+    private Image icoTapisLeft;
+    private Image icoTapisRight;
     private Image icoPoubelle;
     private Image icoMine;
     private Image icoHub;
@@ -50,6 +53,10 @@ public class VueControleur extends JFrame implements Observer {
     private JPanel grilleIP;
     private boolean mousePressed = false;
     private ImagePanel[][] tabIP;
+    private int lastBeltX = -1;
+    private int lastBeltY = -1;
+    private Direction currentDragDirection = Direction.North;
+    private Direction incomingToLast = null; // direction used to arrive at the last belt cell
 
     public VueControleur(Jeu _jeu) {
         jeu = _jeu;
@@ -90,6 +97,8 @@ public class VueControleur extends JFrame implements Observer {
 
         // Images pour les machines
         icoTapis = new ImageIcon("./data/sprites/buildings/belt_top.png").getImage();
+        icoTapisLeft = new ImageIcon("./data/sprites/buildings/belt_left.png").getImage();
+        icoTapisRight = new ImageIcon("./data/sprites/buildings/belt_right.png").getImage();
         icoPoubelle = new ImageIcon("./data/sprites/buildings/trash.png").getImage();
         icoMine = new ImageIcon("./data/sprites/buildings/miner.png").getImage();
         icoHub = new ImageIcon("./data/sprites/buildings/hub.png").getImage();
@@ -238,10 +247,11 @@ public class VueControleur extends JFrame implements Observer {
                 iP.addMouseListener(new MouseAdapter() {
                     @Override
                     public void mouseClicked(MouseEvent e) {
-                        mousePressed = false;
                         if (SwingUtilities.isRightMouseButton(e)) {
                             jeu.supprimerMachine(xx, yy);
                             System.out.println("Supprimer machine à " + xx + "-" + yy);
+                        } else if (machineSelectionnee.equals("Tapis")) {
+                            jeu.placerMachine(xx, yy, "Tapis", currentDragDirection);
                         } else {
                             jeu.placerMachine(xx, yy, machineSelectionnee);
                             System.out.println("Placer " + machineSelectionnee + " à " + xx + "-" + yy);
@@ -253,6 +263,23 @@ public class VueControleur extends JFrame implements Observer {
                         if (mousePressed) {
                             if (SwingUtilities.isRightMouseButton(e)) {
                                 jeu.supprimerMachine(xx, yy);
+                            } else if (machineSelectionnee.equals("Tapis")) {
+                                if (lastBeltX != -1) {
+                                    Direction dir = computeBeltDirection(lastBeltX, lastBeltY, xx, yy);
+                                    currentDragDirection = dir;
+                                    // Place corner at lastBelt if direction changed, straight belt otherwise
+                                    if (incomingToLast != null && incomingToLast != dir) {
+                                        jeu.placerTapisCorner(lastBeltX, lastBeltY, incomingToLast, dir);
+                                    } else {
+                                        jeu.placerMachine(lastBeltX, lastBeltY, "Tapis", dir);
+                                    }
+                                    jeu.placerMachine(xx, yy, "Tapis", dir);
+                                    incomingToLast = dir;
+                                } else {
+                                    jeu.placerMachine(xx, yy, "Tapis", currentDragDirection);
+                                }
+                                lastBeltX = xx;
+                                lastBeltY = yy;
                             } else {
                                 jeu.placerMachine(xx, yy, machineSelectionnee);
                             }
@@ -264,6 +291,12 @@ public class VueControleur extends JFrame implements Observer {
                         mousePressed = true;
                         if (SwingUtilities.isRightMouseButton(e)) {
                             jeu.supprimerMachine(xx, yy);
+                        } else if (machineSelectionnee.equals("Tapis")) {
+                            currentDragDirection = Direction.North;
+                            incomingToLast = null;
+                            lastBeltX = xx;
+                            lastBeltY = yy;
+                            jeu.placerMachine(xx, yy, "Tapis", Direction.North);
                         } else {
                             jeu.placerMachine(xx, yy, machineSelectionnee);
                         }
@@ -272,6 +305,9 @@ public class VueControleur extends JFrame implements Observer {
                     @Override
                     public void mouseReleased(MouseEvent e) {
                         mousePressed = false;
+                        lastBeltX = -1;
+                        lastBeltY = -1;
+                        incomingToLast = null;
                     }
                 });
 
@@ -290,11 +326,56 @@ public class VueControleur extends JFrame implements Observer {
         setLocationRelativeTo(null);
     }
 
+    private Direction computeBeltDirection(int fromX, int fromY, int toX, int toY) {
+        int dx = toX - fromX;
+        int dy = toY - fromY;
+        if (Math.abs(dx) >= Math.abs(dy)) {
+            return dx >= 0 ? Direction.East : Direction.West;
+        } else {
+            return dy >= 0 ? Direction.South : Direction.North;
+        }
+    }
+
+    private double directionToRotation(Direction d) {
+        switch (d) {
+            case East:  return Math.PI / 2;
+            case South: return Math.PI;
+            case West:  return 3 * Math.PI / 2;
+            default:    return 0; // North
+        }
+    }
+
+    // Right turns: N→E, E→S, S→W, W→N
+    private boolean isRightTurn(Direction incoming, Direction outgoing) {
+        return (incoming == Direction.North && outgoing == Direction.East)
+            || (incoming == Direction.East  && outgoing == Direction.South)
+            || (incoming == Direction.South && outgoing == Direction.West)
+            || (incoming == Direction.West  && outgoing == Direction.North);
+    }
+
+    // Rotation for corner images (base orientation assumed: N→E for right, N→W for left)
+    private double cornerRotation(Direction incoming, Direction outgoing) {
+        if (isRightTurn(incoming, outgoing)) {
+            // N→E=0, E→S=90°, S→W=180°, W→N=270°
+            if (incoming == Direction.North) return 0;
+            if (incoming == Direction.East)  return Math.PI / 2;
+            if (incoming == Direction.South) return Math.PI;
+            return 3 * Math.PI / 2; // West
+        } else {
+            // Left turns: N→W=0, W→S=90°, S→E=180°, E→N=270°
+            if (incoming == Direction.North) return 0;
+            if (incoming == Direction.West)  return Math.PI / 2;
+            if (incoming == Direction.South) return Math.PI;
+            return 3 * Math.PI / 2; // East
+        }
+    }
+
     private void mettreAJourAffichage() {
         for (int x = 0; x < sizeX; x++) {
             for (int y = 0; y < sizeY; y++) {
                 tabIP[x][y].setImageBackground(null);
                 tabIP[x][y].setFront(null);
+                tabIP[x][y].setBackgroundRotation(0);
 
                 // Affichage des couleurs aux 4 coins de la grille (2x2)
                 if (x < 2 && y < 2) {
@@ -312,7 +393,15 @@ public class VueControleur extends JFrame implements Observer {
 
                 if (m != null) {
                     if (m instanceof Tapis) {
-                        tabIP[x][y].setImageBackground(icoTapis);
+                        Tapis t = (Tapis) m;
+                        if (t.isCorner()) {
+                            boolean rightTurn = isRightTurn(t.getIncoming(), t.getDirection());
+                            tabIP[x][y].setImageBackground(rightTurn ? icoTapisRight : icoTapisLeft);
+                            tabIP[x][y].setBackgroundRotation(cornerRotation(t.getIncoming(), t.getDirection()));
+                        } else {
+                            tabIP[x][y].setBackgroundRotation(directionToRotation(m.getDirection()));
+                            tabIP[x][y].setImageBackground(icoTapis);
+                        }
                     } else if (m instanceof Poubelle) {
                         tabIP[x][y].setImageBackground(icoPoubelle);
                     } else if (m instanceof Mine) {
