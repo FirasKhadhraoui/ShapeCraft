@@ -117,8 +117,12 @@ public class Jeu extends Thread{
     }
 
     public void rotateMine(int x, int y) {
+        rotateMachine(x, y);
+    }
+
+    public void rotateMachine(int x, int y) {
         Machine m = plateau.getCases()[x][y].getMachine();
-        if (!(m instanceof Mine)) return;
+        if (m == null) return;
         Direction[] dirs = {Direction.North, Direction.East, Direction.South, Direction.West};
         Direction cur = m.getDirection();
         int idx = 0;

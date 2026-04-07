@@ -8,7 +8,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 public class ImagePanel extends JPanel {
-    public enum CutHalf { NONE, LEFT, RIGHT }
+    public enum CutHalf { NONE, LEFT, RIGHT, TOP, BOTTOM }
 
     private Image imgBackground;
     private Image imgFront;
@@ -99,6 +99,10 @@ public class ImagePanel extends JPanel {
                 g2d.clipRect(xFront, yFront, widthFront / 2, heigthFront);
             } else if (cutHalf == CutHalf.RIGHT) {
                 g2d.clipRect(xFront + widthFront / 2, yFront, widthFront / 2, heigthFront);
+            } else if (cutHalf == CutHalf.TOP) {
+                g2d.clipRect(xFront, yFront, widthFront, heigthFront / 2);
+            } else if (cutHalf == CutHalf.BOTTOM) {
+                g2d.clipRect(xFront, yFront + heigthFront / 2, widthFront, heigthFront / 2);
             }
             if (frontTint != null) {
                 g2d.drawImage(drawImg, xFront, yFront, this);

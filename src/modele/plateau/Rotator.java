@@ -12,6 +12,8 @@ public class Rotator extends Machine {
             // Créer une copie de l'item original
             String representation = original.toString();
             ItemShape copie = new ItemShape(representation);
+            copie.setColorItem(original.isColorItem());
+            copie.setCut(original.isCut());
 
             // Appliquer la rotation sur la copie
             copie.rotate();

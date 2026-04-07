@@ -10,9 +10,24 @@ public class ItemShape extends Item {
     public boolean isColorItem() { return colorItem; }
     public void setColorItem(boolean b) { this.colorItem = b; }
     public boolean isCut() { return cut; }
-    // Right half = indices 0,1 are filled; Left half = indices 2,3 are filled
-    public boolean isRightHalf() {
-        return cut && (tabSubShapes[0] != SubShape.None || tabSubShapes[1] != SubShape.None);
+    public void setCut(boolean b) { this.cut = b; }
+
+    /**
+     * Returns which half this cut item occupies based on which quadrants are filled.
+     * Indices: 0=TR, 1=BR, 2=BL, 3=TL
+     * Returns: "RIGHT" (0+1), "LEFT" (2+3), "TOP" (0+3), "BOTTOM" (1+2), or "NONE"
+     */
+    public String getCutDirection() {
+        if (!cut) return "NONE";
+        boolean h0 = tabSubShapes[0] != SubShape.None;
+        boolean h1 = tabSubShapes[1] != SubShape.None;
+        boolean h2 = tabSubShapes[2] != SubShape.None;
+        boolean h3 = tabSubShapes[3] != SubShape.None;
+        if ( h0 &&  h1 && !h2 && !h3) return "RIGHT";
+        if (!h0 && !h1 &&  h2 &&  h3) return "LEFT";
+        if ( h0 && !h1 && !h2 &&  h3) return "TOP";
+        if (!h0 &&  h1 &&  h2 && !h3) return "BOTTOM";
+        return "NONE";
     }
 
     public SubShape[] getSubShapes(Layer l) {

@@ -13,4 +13,14 @@ public enum Direction {
         dx = _dx;
         dy = _dy;
     }
+
+    public Direction rotate90CW() {
+        switch (this) {
+            case North: return East;
+            case East:  return South;
+            case South: return West;
+            case West:  return North;
+            default:    return this;
+        }
+    }
 }

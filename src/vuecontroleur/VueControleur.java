@@ -261,8 +261,9 @@ public class VueControleur extends JFrame implements Observer {
                             jeu.supprimerMachine(xx, yy);
                         } else if (machineSelectionnee.equals("Tapis")) {
                             jeu.placerMachine(xx, yy, "Tapis", currentDragDirection);
-                        } else if (machineSelectionnee.equals("Mine") && plateau.getCases()[xx][yy].getMachine() instanceof Mine) {
-                            jeu.rotateMine(xx, yy);
+                        } else if (plateau.getCases()[xx][yy].getMachine() != null
+                                && !(plateau.getCases()[xx][yy].getMachine() instanceof Tapis)) {
+                            jeu.rotateMachine(xx, yy);
                         } else {
                             jeu.placerMachine(xx, yy, machineSelectionnee);
                         }
@@ -307,7 +308,8 @@ public class VueControleur extends JFrame implements Observer {
                             lastBeltX = xx;
                             lastBeltY = yy;
                             jeu.placerMachine(xx, yy, "Tapis", Direction.North);
-                        } else if (machineSelectionnee.equals("Mine") && plateau.getCases()[xx][yy].getMachine() instanceof Mine) {
+                        } else if (plateau.getCases()[xx][yy].getMachine() != null
+                                && !(plateau.getCases()[xx][yy].getMachine() instanceof Tapis)) {
                             // skip — mouseClicked handles rotation
                         } else {
                             jeu.placerMachine(xx, yy, machineSelectionnee);
@@ -474,12 +476,16 @@ public class VueControleur extends JFrame implements Observer {
                     } else if (m instanceof Livraison) {
                         tabIP[x][y].setImageBackground(icoHub);
                     } else if (m instanceof Cutter) {
+                        tabIP[x][y].setBackgroundRotation(directionToRotation(m.getDirection()));
                         tabIP[x][y].setImageBackground(icoCutter);
                     } else if (m instanceof Rotator) {
+                        tabIP[x][y].setBackgroundRotation(directionToRotation(m.getDirection()));
                         tabIP[x][y].setImageBackground(icoRotater);
                     } else if (m instanceof AtelierPeinture) {
+                        tabIP[x][y].setBackgroundRotation(directionToRotation(m.getDirection()));
                         tabIP[x][y].setImageBackground(icoPainter);
                     } else if (m instanceof Stacker) {
+                        tabIP[x][y].setBackgroundRotation(directionToRotation(m.getDirection()));
                         tabIP[x][y].setImageBackground(icoStacker);
                     }
 
@@ -489,7 +495,13 @@ public class VueControleur extends JFrame implements Observer {
                         tabIP[x][y].setFront(getItemImage(is));
                         tabIP[x][y].setFrontTint(getItemTint(is));
                         if (is.isCut()) {
-                            tabIP[x][y].setCutHalf(is.isRightHalf() ? ImagePanel.CutHalf.RIGHT : ImagePanel.CutHalf.LEFT);
+                            switch (is.getCutDirection()) {
+                                case "RIGHT":  tabIP[x][y].setCutHalf(ImagePanel.CutHalf.RIGHT);  break;
+                                case "LEFT":   tabIP[x][y].setCutHalf(ImagePanel.CutHalf.LEFT);   break;
+                                case "TOP":    tabIP[x][y].setCutHalf(ImagePanel.CutHalf.TOP);    break;
+                                case "BOTTOM": tabIP[x][y].setCutHalf(ImagePanel.CutHalf.BOTTOM); break;
+                                default:       tabIP[x][y].setCutHalf(ImagePanel.CutHalf.NONE);   break;
+                            }
                         }
                     }
                 } else {

@@ -8,15 +8,18 @@ public class Cutter extends Machine {
     private Item leftSlot  = null;  // left half → sent North
     private Item rightSlot = null;  // right half → sent East
 
+    // Input direction = d (belt going in direction d feeds into the cutter from behind)
+    // Left output  = d
+    // Right output = d rotated 90° CW
     @Override
     public boolean hasPlaceFor(Direction senderDir) {
-        if (senderDir == Direction.North) return inputSlot == null;
+        if (senderDir == d) return inputSlot == null;
         return false;
     }
 
     @Override
     public boolean receive(Item item, Direction senderDir) {
-        if (senderDir == Direction.North) inputSlot = item;
+        if (senderDir == d) inputSlot = item;
         return false;
     }
 
@@ -30,33 +33,33 @@ public class Cutter extends Machine {
             leftSlot  = shape;
             rightSlot = rightPart;
             inputSlot = null;
-            System.out.println("Cutter : left=" + shape + " right=" + rightPart);
         }
     }
 
     @Override
     public void send() {
-        // Left half → North
-        Case northCase = c.plateau.getCase(c, Direction.North);
-        if (northCase != null && leftSlot != null) {
-            Machine m = northCase.getMachine();
-            if (m != null && m.hasPlaceFor(Direction.North)) {
-                boolean setFlag = m.receive(leftSlot, Direction.North);
+        Direction leftDir  = d;
+        Direction rightDir = d.rotate90CW();
+
+        // Left half → left output direction
+        Case leftCase = c.plateau.getCase(c, leftDir);
+        if (leftCase != null && leftSlot != null) {
+            Machine m = leftCase.getMachine();
+            if (m != null && m.hasPlaceFor(leftDir)) {
+                boolean setFlag = m.receive(leftSlot, leftDir);
                 if (setFlag) m.movedThisTick = true;
                 leftSlot = null;
-                System.out.println("Cutter : envoi gauche vers Nord");
             }
         }
 
-        // Right half → East
-        Case eastCase = c.plateau.getCase(c, Direction.East);
-        if (eastCase != null && rightSlot != null) {
-            Machine m = eastCase.getMachine();
-            if (m != null && m.hasPlaceFor(Direction.East)) {
-                boolean setFlag = m.receive(rightSlot, Direction.East);
+        // Right half → right output direction
+        Case rightCase = c.plateau.getCase(c, rightDir);
+        if (rightCase != null && rightSlot != null) {
+            Machine m = rightCase.getMachine();
+            if (m != null && m.hasPlaceFor(rightDir)) {
+                boolean setFlag = m.receive(rightSlot, rightDir);
                 if (setFlag) m.movedThisTick = true;
                 rightSlot = null;
-                System.out.println("Cutter : envoi droit vers Est");
             }
         }
     }
