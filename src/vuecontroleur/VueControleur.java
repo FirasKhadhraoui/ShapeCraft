@@ -62,7 +62,7 @@ public class VueControleur extends JFrame implements Observer {
     private int lastBeltX = -1;
     private int lastBeltY = -1;
     private Direction currentDragDirection = Direction.North;
-    private Direction incomingToLast = null; // direction used to arrive at the last belt cell
+    private Direction incomingToLast = null;
 
     public VueControleur(Jeu _jeu) {
         jeu = _jeu;
@@ -95,7 +95,6 @@ public class VueControleur extends JFrame implements Observer {
     }
 
     private void chargerLesIcones() {
-        // Images pour les couleurs des gisements
         icoRed = new ImageIcon("./data/sprites/colors/red.png").getImage();
         icoGreen = new ImageIcon("./data/sprites/colors/green.png").getImage();
         icoBlue = new ImageIcon("./data/sprites/colors/blue.png").getImage();
@@ -105,7 +104,6 @@ public class VueControleur extends JFrame implements Observer {
         icoCircle = new ImageIcon("./data/sprites/shapes/circle.png").getImage();
         icoStar   = new ImageIcon("./data/sprites/shapes/star.png").getImage();
 
-        // Images pour les machines
         icoTapis = new ImageIcon("./data/sprites/buildings/belt_top.png").getImage();
         icoTapisLeft = new ImageIcon("./data/sprites/buildings/belt_left.png").getImage();
         icoTapisRight = new ImageIcon("./data/sprites/buildings/belt_right.png").getImage();
@@ -187,7 +185,7 @@ public class VueControleur extends JFrame implements Observer {
         btnStacker.setHorizontalTextPosition(SwingConstants.CENTER);
 
         btnMine.setToolTipText("Mine - à placer sur un gisement");
-        btnTapis.setToolTipText("Tapis - transporte les items vers le haut");
+        btnTapis.setToolTipText("Tapis - transporte les items");
         btnPoubelle.setToolTipText("Poubelle - détruit les items");
         btnCutter.setToolTipText("Cutter - découpe les formes");
         btnRotater.setToolTipText("Rotator - fait pivoter les formes");
@@ -278,7 +276,6 @@ public class VueControleur extends JFrame implements Observer {
                                 if (lastBeltX != -1) {
                                     Direction dir = computeBeltDirection(lastBeltX, lastBeltY, xx, yy);
                                     currentDragDirection = dir;
-                                    // Place corner at lastBelt if direction changed, straight belt otherwise
                                     if (incomingToLast != null && incomingToLast != dir) {
                                         jeu.placerTapisCorner(lastBeltX, lastBeltY, incomingToLast, dir);
                                     } else {
@@ -345,7 +342,6 @@ public class VueControleur extends JFrame implements Observer {
     }
 
     private Image getItemImage(ItemShape shape) {
-        // Pure color item (4 circles same color) → color icon
         if (isColorItem(shape)) {
             switch (shape.getColors(ItemShape.Layer.one)[0]) {
                 case Red:    return icoRed;
@@ -355,7 +351,6 @@ public class VueControleur extends JFrame implements Observer {
                 default: break;
             }
         }
-        // Shape item → shape PNG (tint applied separately)
         for (SubShape s : shape.getSubShapes(ItemShape.Layer.one)) {
             if (s == SubShape.Carre)  return icoSquare;
             if (s == SubShape.Circle) return icoCircle;
@@ -365,7 +360,7 @@ public class VueControleur extends JFrame implements Observer {
     }
 
     private java.awt.Color getItemTint(ItemShape shape) {
-        if (isColorItem(shape)) return null; // uses color icon directly, no tint
+        if (isColorItem(shape)) return null;
         modele.item.Color[] colors = shape.getColors(ItemShape.Layer.one);
         SubShape[] subs = shape.getSubShapes(ItemShape.Layer.one);
         for (int i = 0; i < 4; i++) {
@@ -373,7 +368,7 @@ public class VueControleur extends JFrame implements Observer {
                 return toAwtColor(colors[i]);
             }
         }
-        return null; // uncolored — show shape PNG as-is
+        return null;
     }
 
     private java.awt.Color toAwtColor(modele.item.Color c) {
@@ -404,32 +399,28 @@ public class VueControleur extends JFrame implements Observer {
             case East:  return Math.PI / 2;
             case South: return Math.PI;
             case West:  return 3 * Math.PI / 2;
-            default:    return 0; // North
+            default:    return 0;
         }
     }
 
-    // Right turns: N→E, E→S, S→W, W→N
     private boolean isRightTurn(Direction incoming, Direction outgoing) {
         return (incoming == Direction.North && outgoing == Direction.East)
-            || (incoming == Direction.East  && outgoing == Direction.South)
-            || (incoming == Direction.South && outgoing == Direction.West)
-            || (incoming == Direction.West  && outgoing == Direction.North);
+                || (incoming == Direction.East  && outgoing == Direction.South)
+                || (incoming == Direction.South && outgoing == Direction.West)
+                || (incoming == Direction.West  && outgoing == Direction.North);
     }
 
-    // Rotation for corner images (base orientation assumed: N→E for right, N→W for left)
     private double cornerRotation(Direction incoming, Direction outgoing) {
         if (isRightTurn(incoming, outgoing)) {
-            // N→E=0, E→S=90°, S→W=180°, W→N=270°
             if (incoming == Direction.North) return 0;
             if (incoming == Direction.East)  return Math.PI / 2;
             if (incoming == Direction.South) return Math.PI;
-            return 3 * Math.PI / 2; // West
+            return 3 * Math.PI / 2;
         } else {
-            // Left turns: N→W=0, E→N=90°, S→E=180°, W→S=270°
             if (incoming == Direction.North) return 0;
             if (incoming == Direction.East)  return Math.PI / 2;
             if (incoming == Direction.South) return Math.PI;
-            return 3 * Math.PI / 2; // West→S
+            return 3 * Math.PI / 2;
         }
     }
 
@@ -443,7 +434,6 @@ public class VueControleur extends JFrame implements Observer {
                 tabIP[x][y].setBackgroundRotation(0);
                 tabIP[x][y].setCutHalf(ImagePanel.CutHalf.NONE);
 
-                // Affichage des couleurs aux 4 coins de la grille (2x2)
                 if (x < 2 && y < 2) {
                     tabIP[x][y].setImageBackground(icoRed);
                 } else if (x >= sizeX - 2 && y < 2) {
@@ -492,20 +482,25 @@ public class VueControleur extends JFrame implements Observer {
                     Item current = m.getCurrent();
                     if (current instanceof ItemShape) {
                         ItemShape is = (ItemShape) current;
-                        tabIP[x][y].setFront(getItemImage(is));
-                        tabIP[x][y].setFrontTint(getItemTint(is));
-                        if (is.isCut()) {
-                            switch (is.getCutDirection()) {
-                                case "RIGHT":  tabIP[x][y].setCutHalf(ImagePanel.CutHalf.RIGHT);  break;
-                                case "LEFT":   tabIP[x][y].setCutHalf(ImagePanel.CutHalf.LEFT);   break;
-                                case "TOP":    tabIP[x][y].setCutHalf(ImagePanel.CutHalf.TOP);    break;
-                                case "BOTTOM": tabIP[x][y].setCutHalf(ImagePanel.CutHalf.BOTTOM); break;
-                                default:       tabIP[x][y].setCutHalf(ImagePanel.CutHalf.NONE);   break;
+                        if (m instanceof Livraison) {
+                            tabIP[x][y].setFront(null);
+                            tabIP[x][y].setFrontTint(null);
+                            tabIP[x][y].setCutHalf(ImagePanel.CutHalf.NONE);
+                        } else {
+                            tabIP[x][y].setFront(getItemImage(is));
+                            tabIP[x][y].setFrontTint(getItemTint(is));
+                            if (is.isCut()) {
+                                switch (is.getCutDirection()) {
+                                    case "RIGHT":  tabIP[x][y].setCutHalf(ImagePanel.CutHalf.RIGHT);  break;
+                                    case "LEFT":   tabIP[x][y].setCutHalf(ImagePanel.CutHalf.LEFT);   break;
+                                    case "TOP":    tabIP[x][y].setCutHalf(ImagePanel.CutHalf.TOP);    break;
+                                    case "BOTTOM": tabIP[x][y].setCutHalf(ImagePanel.CutHalf.BOTTOM); break;
+                                    default:       tabIP[x][y].setCutHalf(ImagePanel.CutHalf.NONE);   break;
+                                }
                             }
                         }
                     }
                 } else {
-                    // Show shape zone images at 50% size (setFront draws in center area)
                     int midX = sizeX / 2 - 1;
                     int midY = sizeY / 2 - 1;
                     if (x >= midX && x <= midX + 2 && y < 3) {

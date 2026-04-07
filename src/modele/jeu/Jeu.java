@@ -54,6 +54,12 @@ public class Jeu extends Thread{
             return;
         }
 
+        // Empêcher de remplacer une Mine (mais on peut la supprimer)
+        if (plateau.getCases()[x][y].getMachine() instanceof Mine) {
+            System.out.println("Action impossible : Une mine ne peut pas être remplacée. Supprimez-la d'abord.");
+            return;
+        }
+
         // Vérifier si la case a un gisement - SEULE UNE MINE PEUT ÊTRE PLACÉE
         if (plateau.getCases()[x][y].getGisement() != null) {
             if (!type.equals("Mine")) {
@@ -100,10 +106,24 @@ public class Jeu extends Thread{
     }
 
     public void placerMachine(int x, int y, String type, Direction direction) {
+        // Empêcher de remplacer le Hub
         if (plateau.getCases()[x][y].getMachine() instanceof Livraison) {
             System.out.println("Action impossible : Le Hub ne peut pas être remplacé.");
             return;
         }
+
+        // Empêcher de remplacer une Mine
+        if (plateau.getCases()[x][y].getMachine() instanceof Mine) {
+            System.out.println("Action impossible : Une mine ne peut pas être remplacée.");
+            return;
+        }
+
+        // Vérifier si la case a un gisement - SEULE UNE MINE PEUT ÊTRE PLACÉE
+        if (plateau.getCases()[x][y].getGisement() != null) {
+            System.out.println("Impossible : seule une mine peut être placée sur un gisement !");
+            return;
+        }
+
         if (!type.equals("Tapis")) {
             placerMachine(x, y, type);
             return;
@@ -112,7 +132,24 @@ public class Jeu extends Thread{
     }
 
     public void placerTapisCorner(int x, int y, Direction incoming, Direction outgoing) {
-        if (plateau.getCases()[x][y].getMachine() instanceof Livraison) return;
+        // Empêcher de remplacer le Hub
+        if (plateau.getCases()[x][y].getMachine() instanceof Livraison) {
+            System.out.println("Action impossible : Le Hub ne peut pas être remplacé.");
+            return;
+        }
+
+        // Empêcher de remplacer une Mine
+        if (plateau.getCases()[x][y].getMachine() instanceof Mine) {
+            System.out.println("Action impossible : Une mine ne peut pas être remplacée.");
+            return;
+        }
+
+        // Vérifier si la case a un gisement - SEULE UNE MINE PEUT ÊTRE PLACÉE
+        if (plateau.getCases()[x][y].getGisement() != null) {
+            System.out.println("Impossible : seule une mine peut être placée sur un gisement !");
+            return;
+        }
+
         plateau.setMachine(x, y, new Tapis(incoming, outgoing));
     }
 
@@ -138,18 +175,17 @@ public class Jeu extends Thread{
         Machine m = c.getMachine();
 
         if (m != null) {
-            // Empêcher la suppression si c'est le Hub
+            // Empêcher la suppression si c'est le Hub uniquement
             if (m instanceof Livraison) {
                 System.out.println("Action impossible : Le Hub ne peut pas être supprimé.");
                 return;
             }
+            // Les mines peuvent être supprimées (pas de blocage)
             m.clearCurrent();
             System.out.println("Suppression de la machine à (" + x + "," + y + ") et de son item");
         }
 
         plateau.setMachine(x, y, null);
-
-        // Forcer le rafraîchissement immédiat
         plateau.forceRefresh();
     }
 
