@@ -20,9 +20,25 @@ public class Jeu extends Thread{
     public Jeu() {
         plateau = new Plateau();
 
-        // Créer une SEULE instance de Livraison
-        ItemShape formeAttendue = new ItemShape("CrCb--Cb");
-        Livraison hubCentral = new Livraison(formeAttendue);
+        // Définir les objectifs (forme + quantité)
+        // Les formes disponibles sur le plateau :
+        // - Carrés rouges (coins) : CrCrCrCr
+        // - Cercles verts (coins) : cgcgcgcg
+        // - Cercles bleus (coins) : cbcbcbcb
+        // - Cercles jaunes (coins) : cycycycy
+        // - Carrés gris (bord haut) : C-C-C-C-
+        // - Étoiles grises (bord bas) : S-S-S-S-
+        // - Cercles gris (bord gauche) : c-c-c-c-
+
+        ItemShape[] objectifsFormes = {
+                new ItemShape("CrCb--Cb"),  // Objectif 1: Carré Rouge + Carré Bleu + Vide + Carré Bleu
+                new ItemShape("CbCr--Cr"),  // Objectif 2: Carré Bleu + Carré Rouge + Vide + Carré Rouge
+                new ItemShape("CrCr----")   // Objectif 3: 2 Carrés Rouges en haut
+        };
+
+        int[] objectifsQuantites = {5, 10, 15}; // 5, puis 10, puis 15 items
+
+        Livraison hubCentral = new Livraison(objectifsFormes, objectifsQuantites);
 
         // Placement du Hub au centre de la grille (zone 3x3) avec la MÊME instance
         int centerX = Plateau.SIZE_X / 2;
