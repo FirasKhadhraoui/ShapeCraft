@@ -21,26 +21,17 @@ public class Jeu extends Thread{
         plateau = new Plateau();
 
         // Définir les objectifs (forme + quantité)
-        // Les formes disponibles sur le plateau :
-        // - Carrés rouges (coins) : CrCrCrCr
-        // - Cercles verts (coins) : cgcgcgcg
-        // - Cercles bleus (coins) : cbcbcbcb
-        // - Cercles jaunes (coins) : cycycycy
-        // - Carrés gris (bord haut) : C-C-C-C-
-        // - Étoiles grises (bord bas) : S-S-S-S-
-        // - Cercles gris (bord gauche) : c-c-c-c-
-
         ItemShape[] objectifsFormes = {
-                new ItemShape("CrCb--Cb"),  // Objectif 1: Carré Rouge + Carré Bleu + Vide + Carré Bleu
-                new ItemShape("CbCr--Cr"),  // Objectif 2: Carré Bleu + Carré Rouge + Vide + Carré Rouge
-                new ItemShape("CrCr----")   // Objectif 3: 2 Carrés Rouges en haut
+                new ItemShape("CrCr----"),
+                new ItemShape("CrCr----"),
+                new ItemShape("CrCr----")
         };
 
-        int[] objectifsQuantites = {5, 10, 15}; // 5, puis 10, puis 15 items
+        int[] objectifsQuantites = {5, 10, 15};
 
         Livraison hubCentral = new Livraison(objectifsFormes, objectifsQuantites);
 
-        // Placement du Hub au centre de la grille (zone 3x3) avec la MÊME instance
+        // Placement du Hub au centre de la grille (zone 3x3)
         int centerX = Plateau.SIZE_X / 2;
         int centerY = Plateau.SIZE_Y / 2;
         for (int x = centerX - 1; x <= centerX + 1; x++) {
@@ -65,9 +56,9 @@ public class Jeu extends Thread{
             return;
         }
 
-        // Empêcher de remplacer une Mine (mais on peut la supprimer)
-        if (plateau.getCases()[x][y].getMachine() instanceof Mine) {
-            System.out.println("Action impossible : Une mine ne peut pas être remplacée. Supprimez-la d'abord.");
+        // Empêcher de remplacer une machine existante (quelle qu'elle soit)
+        if (plateau.getCases()[x][y].getMachine() != null) {
+            System.out.println("Action impossible : Une machine existe déjà ici. Supprimez-la d'abord (clic droit).");
             return;
         }
 
@@ -123,9 +114,9 @@ public class Jeu extends Thread{
             return;
         }
 
-        // Empêcher de remplacer une Mine
-        if (plateau.getCases()[x][y].getMachine() instanceof Mine) {
-            System.out.println("Action impossible : Une mine ne peut pas être remplacée.");
+        // Empêcher de remplacer une machine existante
+        if (plateau.getCases()[x][y].getMachine() != null) {
+            System.out.println("Action impossible : Une machine existe déjà ici. Supprimez-la d'abord (clic droit).");
             return;
         }
 
@@ -149,9 +140,9 @@ public class Jeu extends Thread{
             return;
         }
 
-        // Empêcher de remplacer une Mine
-        if (plateau.getCases()[x][y].getMachine() instanceof Mine) {
-            System.out.println("Action impossible : Une mine ne peut pas être remplacée.");
+        // Empêcher de remplacer une machine existante
+        if (plateau.getCases()[x][y].getMachine() != null) {
+            System.out.println("Action impossible : Une machine existe déjà ici. Supprimez-la d'abord (clic droit).");
             return;
         }
 
@@ -191,7 +182,7 @@ public class Jeu extends Thread{
                 System.out.println("Action impossible : Le Hub ne peut pas être supprimé.");
                 return;
             }
-            // Les mines peuvent être supprimées (pas de blocage)
+            // Toutes les autres machines peuvent être supprimées
             m.clearCurrent();
             System.out.println("Suppression de la machine à (" + x + "," + y + ") et de son item");
         }
