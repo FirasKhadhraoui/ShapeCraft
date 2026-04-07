@@ -3,8 +3,8 @@ package modele.item;
 public class ItemShape extends Item {
     private SubShape[] tabSubShapes;
     private Color[] tabColors;
-    private boolean colorItem = false; // true for items from color gisements (corners)
-    private boolean cut = false;       // true after Cut() is called
+    private boolean colorItem = false; // true pour les items issus des gisements de couleur (coins)
+    private boolean cut = false;       // true après un appel à Cut()
     public enum Layer {one, two, three};
 
     public boolean isColorItem() { return colorItem; }
@@ -13,9 +13,9 @@ public class ItemShape extends Item {
     public void setCut(boolean b) { this.cut = b; }
 
     /**
-     * Returns which half this cut item occupies based on which quadrants are filled.
-     * Indices: 0=TR, 1=BR, 2=BL, 3=TL
-     * Returns: "RIGHT" (0+1), "LEFT" (2+3), "TOP" (0+3), "BOTTOM" (1+2), or "NONE"
+     * Retourne la moitié occupée par cet item coupé selon les quadrants remplis.
+     * Indices : 0=Haut-Droite, 1=Bas-Droite, 2=Bas-Gauche, 3=Haut-Gauche
+     * Retourne : "RIGHT" (0+1), "LEFT" (2+3), "TOP" (0+3), "BOTTOM" (1+2), ou "NONE"
      */
     public String getCutDirection() {
         if (!cut) return "NONE";

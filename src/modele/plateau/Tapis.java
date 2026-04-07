@@ -4,7 +4,7 @@ import modele.item.ItemShape;
 
 public class Tapis extends Machine {
 
-    private Direction incoming = null; // null = straight belt
+    private Direction incoming = null; // null = tapis droit
 
     public Tapis() {
         this.d = Direction.North;

@@ -56,15 +56,15 @@ public abstract class Machine implements Runnable {
         return current.isEmpty();
     }
 
-    // Can this machine accept an item coming from direction senderDir?
-    // Override in machines with multiple input slots.
+    // Cette machine peut-elle accepter un item venant de la direction senderDir ?
+    // À surcharger dans les machines avec plusieurs slots d'entrée.
     public boolean hasPlaceFor(Direction senderDir) {
         return hasPlace();
     }
 
-    // Deliver an item to this machine from the given sender direction.
-    // Returns true if movedThisTick should be set, false if not needed.
-    // Override to route items to custom slots instead of current.
+    // Reçoit un item de la direction donnée.
+    // Retourne true si movedThisTick doit être activé, false sinon.
+    // À surcharger pour router les items vers des slots personnalisés.
     public boolean receive(Item item, Direction senderDir) {
         current.add(item);
         return true;

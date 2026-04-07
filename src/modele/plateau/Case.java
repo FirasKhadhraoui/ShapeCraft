@@ -10,7 +10,7 @@ public class Case {
 
     public void setMachine(Machine m) {
         this.machine = m;
-        if (m != null) {  // AJOUTER CETTE CONDITION
+        if (m != null) {
             m.setCase(this);
         }
     }

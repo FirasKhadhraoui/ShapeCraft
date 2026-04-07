@@ -20,8 +20,8 @@ public class AtelierPeinture extends Machine {
         return false;
     }
 
-    // Route item to the correct slot; return false so movedThisTick is NOT set,
-    // allowing send() to run in the same tick if a painted item is already waiting.
+    // Route l'item vers le bon slot ; retourne false pour ne pas bloquer send()
+    // dans le même tick si un item peint est déjà en attente.
     @Override
     public boolean receive(Item item, Direction senderDir) {
         if (senderDir == Direction.South) {

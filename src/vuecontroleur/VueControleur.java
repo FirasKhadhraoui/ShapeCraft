@@ -307,7 +307,7 @@ public class VueControleur extends JFrame implements Observer {
                             jeu.placerMachine(xx, yy, "Tapis", Direction.North);
                         } else if (plateau.getCases()[xx][yy].getMachine() != null
                                 && !(plateau.getCases()[xx][yy].getMachine() instanceof Tapis)) {
-                            // skip — mouseClicked handles rotation
+                            // ignoré — mouseClicked gère la rotation
                         } else {
                             jeu.placerMachine(xx, yy, machineSelectionnee);
                         }

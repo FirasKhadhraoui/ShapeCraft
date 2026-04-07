@@ -81,7 +81,7 @@ public class ImagePanel extends JPanel {
         }
 
         if (imgFront != null) {
-            // Optionally tint the image first
+            // Teindre l'image si une couleur est définie
             Image drawImg = imgFront;
             if (frontTint != null) {
                 BufferedImage tinted = new BufferedImage(widthFront, heigthFront, BufferedImage.TYPE_INT_ARGB);

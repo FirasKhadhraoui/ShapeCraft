@@ -8,9 +8,9 @@ public class Cutter extends Machine {
     private Item leftSlot  = null;  // left half → sent North
     private Item rightSlot = null;  // right half → sent East
 
-    // Input direction = d (belt going in direction d feeds into the cutter from behind)
-    // Left output  = d
-    // Right output = d rotated 90° CW
+    // Direction d'entrée = d (tapis allant dans la direction d alimente le cutter par derrière)
+    // Sortie gauche = d
+    // Sortie droite = d tourné de 90° dans le sens des aiguilles d'une montre
     @Override
     public boolean hasPlaceFor(Direction senderDir) {
         if (senderDir == d) return inputSlot == null;
@@ -27,7 +27,7 @@ public class Cutter extends Machine {
     public void work() {
         if (inputSlot != null && leftSlot == null && rightSlot == null) {
             ItemShape shape = (ItemShape) inputSlot;
-            // Cut() returns right part, shape becomes left part
+            // Cut() retourne la partie droite, shape devient la partie gauche
             ItemShape rightPart = shape.Cut();
             rightPart.setColorItem(shape.isColorItem());
             leftSlot  = shape;
@@ -41,7 +41,7 @@ public class Cutter extends Machine {
         Direction leftDir  = d;
         Direction rightDir = d.rotate90CW();
 
-        // Left half → left output direction
+        // Moitié gauche → direction de sortie gauche
         Case leftCase = c.plateau.getCase(c, leftDir);
         if (leftCase != null && leftSlot != null) {
             Machine m = leftCase.getMachine();
@@ -52,7 +52,7 @@ public class Cutter extends Machine {
             }
         }
 
-        // Right half → right output direction
+        // Moitié droite → direction de sortie droite
         Case rightCase = c.plateau.getCase(c, rightDir);
         if (rightCase != null && rightSlot != null) {
             Machine m = rightCase.getMachine();
