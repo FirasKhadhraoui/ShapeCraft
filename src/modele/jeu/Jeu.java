@@ -49,18 +49,29 @@ public class Jeu extends Thread{
 
     public void placerMachine(int x, int y, String type) {
         Machine nouvelleMachine = null;
+        Machine existante = plateau.getCases()[x][y].getMachine();
 
         // Empêcher de remplacer le Hub
-        if (plateau.getCases()[x][y].getMachine() instanceof Livraison) {
+        if (existante instanceof Livraison) {
             System.out.println("Action impossible : Le Hub ne peut pas être remplacé.");
             return;
         }
 
-        // Empêcher de remplacer une machine existante (quelle qu'elle soit)
-        if (plateau.getCases()[x][y].getMachine() != null) {
-            System.out.println("Action impossible : Une machine existe déjà ici. Supprimez-la d'abord (clic droit).");
+        // Empêcher de remplacer une Mine
+        if (existante instanceof Mine) {
+            System.out.println("Action impossible : Une mine ne peut pas être remplacée. Supprimez-la d'abord (clic droit).");
             return;
         }
+
+        // Empêcher de remplacer les machines spéciales
+        if (existante instanceof Cutter || existante instanceof Rotator ||
+                existante instanceof AtelierPeinture || existante instanceof Stacker ||
+                existante instanceof Poubelle) {
+            System.out.println("Action impossible : Cette machine ne peut pas être remplacée. Supprimez-la d'abord (clic droit).");
+            return;
+        }
+
+        // Les Tapis peuvent être remplacés (on continue)
 
         // Vérifier si la case a un gisement - SEULE UNE MINE PEUT ÊTRE PLACÉE
         if (plateau.getCases()[x][y].getGisement() != null) {
@@ -108,15 +119,25 @@ public class Jeu extends Thread{
     }
 
     public void placerMachine(int x, int y, String type, Direction direction) {
+        Machine existante = plateau.getCases()[x][y].getMachine();
+
         // Empêcher de remplacer le Hub
-        if (plateau.getCases()[x][y].getMachine() instanceof Livraison) {
+        if (existante instanceof Livraison) {
             System.out.println("Action impossible : Le Hub ne peut pas être remplacé.");
             return;
         }
 
-        // Empêcher de remplacer une machine existante
-        if (plateau.getCases()[x][y].getMachine() != null) {
-            System.out.println("Action impossible : Une machine existe déjà ici. Supprimez-la d'abord (clic droit).");
+        // Empêcher de remplacer une Mine
+        if (existante instanceof Mine) {
+            System.out.println("Action impossible : Une mine ne peut pas être remplacée.");
+            return;
+        }
+
+        // Empêcher de remplacer les machines spéciales
+        if (existante instanceof Cutter || existante instanceof Rotator ||
+                existante instanceof AtelierPeinture || existante instanceof Stacker ||
+                existante instanceof Poubelle) {
+            System.out.println("Action impossible : Cette machine ne peut pas être remplacée. Supprimez-la d'abord (clic droit).");
             return;
         }
 
@@ -134,15 +155,25 @@ public class Jeu extends Thread{
     }
 
     public void placerTapisCorner(int x, int y, Direction incoming, Direction outgoing) {
+        Machine existante = plateau.getCases()[x][y].getMachine();
+
         // Empêcher de remplacer le Hub
-        if (plateau.getCases()[x][y].getMachine() instanceof Livraison) {
+        if (existante instanceof Livraison) {
             System.out.println("Action impossible : Le Hub ne peut pas être remplacé.");
             return;
         }
 
-        // Empêcher de remplacer une machine existante
-        if (plateau.getCases()[x][y].getMachine() != null) {
-            System.out.println("Action impossible : Une machine existe déjà ici. Supprimez-la d'abord (clic droit).");
+        // Empêcher de remplacer une Mine
+        if (existante instanceof Mine) {
+            System.out.println("Action impossible : Une mine ne peut pas être remplacée.");
+            return;
+        }
+
+        // Empêcher de remplacer les machines spéciales
+        if (existante instanceof Cutter || existante instanceof Rotator ||
+                existante instanceof AtelierPeinture || existante instanceof Stacker ||
+                existante instanceof Poubelle) {
+            System.out.println("Action impossible : Cette machine ne peut pas être remplacée. Supprimez-la d'abord (clic droit).");
             return;
         }
 
@@ -182,7 +213,7 @@ public class Jeu extends Thread{
                 System.out.println("Action impossible : Le Hub ne peut pas être supprimé.");
                 return;
             }
-            // Toutes les autres machines peuvent être supprimées
+            // Toutes les autres machines peuvent être supprimées (y compris les mines)
             m.clearCurrent();
             System.out.println("Suppression de la machine à (" + x + "," + y + ") et de son item");
         }
