@@ -6,28 +6,30 @@ import modele.item.Color;
 
 public class AtelierPeinture extends Machine {
 
-    private Item colorSlot = null; // filled by belt coming from North (sender direction = South)
-    private Item shapeSlot = null; // filled by belt coming from West  (sender direction = East)
+    private ItemShape colorSlot = null;
+    private ItemShape shapeSlot = null;
 
     public AtelierPeinture() {
-        this.d = Direction.East; // always outputs to the right
+        this.d = Direction.East;
     }
 
     @Override
     public boolean hasPlaceFor(Direction senderDir) {
-        if (senderDir == Direction.South) return colorSlot == null; // top input
-        if (senderDir == Direction.East)  return shapeSlot == null; // left input
+        if (senderDir == Direction.South) {
+            return colorSlot == null;
+        }
+        if (senderDir == Direction.East) {
+            return shapeSlot == null;
+        }
         return false;
     }
 
-    // Route l'item vers le bon slot ; retourne false pour ne pas bloquer send()
-    // dans le même tick si un item peint est déjà en attente.
     @Override
     public boolean receive(Item item, Direction senderDir) {
         if (senderDir == Direction.South) {
-            colorSlot = item;
+            colorSlot = (ItemShape) item;
         } else if (senderDir == Direction.East) {
-            shapeSlot = item;
+            shapeSlot = (ItemShape) item;
         }
         return false;
     }
@@ -35,12 +37,12 @@ public class AtelierPeinture extends Machine {
     @Override
     public void work() {
         if (colorSlot != null && shapeSlot != null && current.isEmpty()) {
-            Color c = extractColor((ItemShape) colorSlot);
+            Color c = extractColor(colorSlot);
             if (c != null) {
-                ItemShape painted = new ItemShape(((ItemShape) shapeSlot).toString());
+                ItemShape painted = new ItemShape(shapeSlot.toString());
                 painted.Color(c);
+                painted.setColorItem(false);
                 current.add(painted);
-                System.out.println("AtelierPeinture : item peint en " + c);
             }
             colorSlot = null;
             shapeSlot = null;
@@ -49,7 +51,31 @@ public class AtelierPeinture extends Machine {
 
     private Color extractColor(ItemShape colorItem) {
         for (Color c : colorItem.getColors(ItemShape.Layer.one)) {
-            if (c != null) return c;
+            if (c != null) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void send() {
+        if (!current.isEmpty()) {
+            Case nextCase = c.plateau.getCase(c, Direction.East);
+            if (nextCase != null) {
+                Machine nextMachine = nextCase.getMachine();
+                if (nextMachine != null && nextMachine.hasPlaceFor(Direction.East)) {
+                    Item item = current.removeFirst();
+                    nextMachine.receive(item, Direction.East);
+                }
+            }
+        }
+    }
+
+    @Override
+    public Item getCurrent() {
+        if (!current.isEmpty()) {
+            return current.getFirst();
         }
         return null;
     }

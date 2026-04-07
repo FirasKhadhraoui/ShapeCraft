@@ -56,15 +56,10 @@ public abstract class Machine implements Runnable {
         return current.isEmpty();
     }
 
-    // Cette machine peut-elle accepter un item venant de la direction senderDir ?
-    // À surcharger dans les machines avec plusieurs slots d'entrée.
     public boolean hasPlaceFor(Direction senderDir) {
         return hasPlace();
     }
 
-    // Reçoit un item de la direction donnée.
-    // Retourne true si movedThisTick doit être activé, false sinon.
-    // À surcharger pour router les items vers des slots personnalisés.
     public boolean receive(Item item, Direction senderDir) {
         current.add(item);
         return true;
@@ -83,15 +78,6 @@ public abstract class Machine implements Runnable {
                 boolean setFlag = nextMachine.receive(item, d);
                 if (setFlag) nextMachine.movedThisTick = true;
                 current.remove(item);
-                System.out.println("Envoi d'un item vers " + d);
-            } else if (current.size() > 0 && nextMachine == null) {
-                System.out.println("Item bloqué : pas de machine devant");
-            } else if (current.size() > 0 && nextMachine != null && !nextMachine.hasPlaceFor(d)) {
-                System.out.println("Item bloqué : machine suivante pleine");
-            }
-        } else {
-            if (!current.isEmpty()) {
-                System.out.println("Item bloqué : bord de la carte");
             }
         }
     }
