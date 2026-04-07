@@ -20,11 +20,6 @@ public class Jeu extends Thread{
     public Jeu() {
         plateau = new Plateau();
 
-        // Mines pré-placées sur les gisements
-        plateau.setMachine(5, 10, new Mine());
-        plateau.setMachine(7, 12, new Mine());
-        plateau.setMachine(8, 12, new Mine());
-
         // Créer une SEULE instance de Livraison
         ItemShape formeAttendue = new ItemShape("CrCb--Cb");
         Livraison hubCentral = new Livraison(formeAttendue);

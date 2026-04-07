@@ -18,15 +18,6 @@ public class Plateau extends Observable implements Runnable {
     }
 
     private void initGisements() {
-        // Gisements existants
-        grilleCases[5][10].setGisement(new ItemShape("CrCb--Cb"));
-        grilleCases[7][7].setGisement(new ItemShape("CbCr--Cr"));
-        grilleCases[3][4].setGisement(new ItemShape("CrCb--Cb"));
-
-        // NOUVEAUX GISEMENTS
-        grilleCases[7][12].setGisement(new ItemShape("CrCb--Cb"));
-        grilleCases[8][12].setGisement(new ItemShape("CrCb--Cb"));
-
         // Gisements de couleur dans les coins (zones 2x2)
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 2; j++) {
