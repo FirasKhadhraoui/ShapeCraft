@@ -4,41 +4,52 @@ import modele.item.ItemShape;
 
 /**
  * Rotator : machine qui fait pivoter une forme de 90° dans le sens horaire.
- *
- * Entrée : par n'importe quelle direction
- * Sortie : dans la direction d (paramétrable par rotation de la machine)
- *
- * La rotation est appliquée à une copie de l'item pour ne pas modifier
- * l'original (évite les effets de bord si le même item est référencé ailleurs).
+ * La rotation n'est appliquée qu'une seule fois à l'arrivée de l'item.
  */
 public class Rotator extends Machine {
 
-    /**
-     * Applique une rotation de 90° à l'item.
-     * Crée une copie pour préserver l'original.
-     */
+    private boolean rotated = false;
+
     @Override
     public void work() {
-        if (!current.isEmpty()) {
-            // Récupère l'item original
+        if (!current.isEmpty() && !rotated) {
             ItemShape original = (ItemShape) current.getFirst();
 
-            // Crée une copie à partir de la chaîne de caractères
+            // Créer une copie de l'item original
             String representation = original.toString();
             ItemShape copie = new ItemShape(representation);
+            copie.setColorItem(original.isColorItem());
+            copie.setCut(original.isCut());
 
-            // Préserve les propriétés de l'original
-            copie.setColorItem(original.isColorItem()); // Item de couleur ?
-            copie.setCut(original.isCut());             // État coupé ?
-
-            // Applique la rotation sur la copie
+            // Appliquer la rotation sur la copie
             copie.rotate();
 
-            // Remplace l'original par la copie modifiée
+            // Remplacer l'original par la copie modifiée
             current.removeFirst();
             current.addFirst(copie);
 
+            rotated = true;
+
             System.out.println("Rotator : rotation appliquée à un item");
         }
+    }
+
+    @Override
+    public void send() {
+        // Sauvegarder l'état de current avant l'envoi
+        boolean hadItem = !current.isEmpty();
+
+        super.send(); // Tentative d'envoi
+
+        // Si l'item est parti (current est vide), réinitialiser le flag
+        if (hadItem && current.isEmpty()) {
+            rotated = false;
+        }
+    }
+
+    @Override
+    public void clearCurrent() {
+        super.clearCurrent();
+        rotated = false;
     }
 }
