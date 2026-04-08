@@ -26,4 +26,15 @@ public enum Direction {
             default:    return this;
         }
     }
+
+    /** Rotates 90° counter-clockwise (= 270° CW). */
+    public Direction rotate90CCW() {
+        switch (this) {
+            case North: return West;
+            case West:  return South;
+            case South: return East;
+            case East:  return North;
+            default:    return this;
+        }
+    }
 }

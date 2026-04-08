@@ -136,8 +136,16 @@ public class ItemShape extends Item {
         }
     }
 
-    public void stack(ItemShape shapeSup) {
-        System.out.println("Empilement effectué (à implémenter)");
+    public void stack(ItemShape other) {
+        // Merge non-None quadrants from other into this (where this has None)
+        for (int i = 0; i < 4 && i < tabSubShapes.length && i < other.tabSubShapes.length; i++) {
+            if (tabSubShapes[i] == SubShape.None && other.tabSubShapes[i] != SubShape.None) {
+                tabSubShapes[i] = other.tabSubShapes[i];
+                tabColors[i]    = other.tabColors[i];
+            }
+        }
+        this.cut = false;
+        System.out.println("Stacker : combinaison → " + this.toString());
     }
 
     /**

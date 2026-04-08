@@ -431,14 +431,36 @@ public class VueControleur extends JFrame implements Observer {
         JScrollPane scrollPane = new JScrollPane(grilleIP);
         scrollPane.setPreferredSize(new Dimension(sizeX * pxCase + 20, sizeY * pxCase + 20));
 
+        // Ctrl+scroll = zoom, scroll normal = défilement
+        scrollPane.addMouseWheelListener(e -> {
+            if (e.isControlDown()) {
+                int delta = e.getWheelRotation() < 0 ? 4 : -4;
+                zoomGrille(delta);
+                e.consume();
+            }
+        });
+
         mainPanel.add(toolBar, BorderLayout.WEST);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
         add(mainPanel);
 
-        // Taille fixe de la fenêtre
         setSize(sizeX * pxCase + 150, sizeY * pxCase + 130);
         setLocationRelativeTo(null);
+    }
+
+    private void zoomGrille(int delta) {
+        pxCase = Math.max(10, Math.min(100, pxCase + delta));
+        Dimension d = new Dimension(pxCase, pxCase);
+        for (int x = 0; x < sizeX; x++) {
+            for (int y = 0; y < sizeY; y++) {
+                tabIP[x][y].setPreferredSize(d);
+                tabIP[x][y].setMinimumSize(d);
+                tabIP[x][y].setMaximumSize(d);
+            }
+        }
+        grilleIP.revalidate();
+        grilleIP.repaint();
     }
 
     private boolean isColorItem(ItemShape shape) {

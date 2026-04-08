@@ -6,8 +6,8 @@ import modele.item.ItemShape;
 
 public class Plateau extends Observable implements Runnable {
 
-    public static final int SIZE_X = 16;
-    public static final int SIZE_Y = 16;
+    public static final int SIZE_X = 30;
+    public static final int SIZE_Y = 30;
 
     private HashMap<Case, Point> map = new HashMap<Case, Point>();
     private Case[][] grilleCases = new Case[SIZE_X][SIZE_Y];
