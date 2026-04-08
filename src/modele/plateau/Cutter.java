@@ -3,26 +3,38 @@ package modele.plateau;
 import modele.item.Item;
 import modele.item.ItemShape;
 
+/**
+ * Cutter : machine qui découpe une forme en deux parties.
+ *
+ * Entrée : par derrière (direction d)
+ * Sortie gauche : direction d
+ * Sortie droite : direction d tournée de 90° vers la droite
+ *
+ * Exemple avec d = North :
+ *   Entrée : Sud (tapis vers Nord)
+ *   Sortie gauche : Nord (partie haute)
+ *   Sortie droite : Est (partie basse)
+ */
 public class Cutter extends Machine {
-    private Item inputSlot = null;  // receives from South (senderDir = North)
-    private Item leftSlot  = null;  // left half → sent North
-    private Item rightSlot = null;  // right half → sent East
 
-    // Direction d'entrée = d (tapis allant dans la direction d alimente le cutter par derrière)
-    // Sortie gauche = d
-    // Sortie droite = d tourné de 90° dans le sens des aiguilles d'une montre
+    private Item inputSlot = null;  // Item reçu en entrée
+    private Item leftSlot  = null;  // Partie gauche (va vers leftDir)
+    private Item rightSlot = null;  // Partie droite (va vers rightDir)
+
+    // Accepte un item uniquement par la direction d (derrière le cutter)
     @Override
     public boolean hasPlaceFor(Direction senderDir) {
-        if (senderDir == d) return inputSlot == null;
-        return false;
+        return senderDir == d && inputSlot == null;
     }
 
+    // Reçoit un item et le stocke dans inputSlot
     @Override
     public boolean receive(Item item, Direction senderDir) {
         if (senderDir == d) inputSlot = item;
         return false;
     }
 
+    // Découpe l'item en deux parties
     @Override
     public void work() {
         if (inputSlot != null && leftSlot == null && rightSlot == null) {
@@ -30,18 +42,19 @@ public class Cutter extends Machine {
             // Cut() retourne la partie droite, shape devient la partie gauche
             ItemShape rightPart = shape.Cut();
             rightPart.setColorItem(shape.isColorItem());
-            leftSlot  = shape;
-            rightSlot = rightPart;
-            inputSlot = null;
+            leftSlot  = shape;      // Partie gauche
+            rightSlot = rightPart;  // Partie droite
+            inputSlot = null;       // Entrée vidée
         }
     }
 
+    // Envoie les deux parties vers leurs sorties respectives
     @Override
     public void send() {
-        Direction leftDir  = d;
-        Direction rightDir = d.rotate90CW();
+        Direction leftDir  = d;              // Sortie gauche = direction d
+        Direction rightDir = d.rotate90CW(); // Sortie droite = d + 90°
 
-        // Moitié gauche → direction de sortie gauche
+        // Envoi de la partie gauche
         Case leftCase = c.plateau.getCase(c, leftDir);
         if (leftCase != null && leftSlot != null) {
             Machine m = leftCase.getMachine();
@@ -52,7 +65,7 @@ public class Cutter extends Machine {
             }
         }
 
-        // Moitié droite → direction de sortie droite
+        // Envoi de la partie droite
         Case rightCase = c.plateau.getCase(c, rightDir);
         if (rightCase != null && rightSlot != null) {
             Machine m = rightCase.getMachine();
@@ -64,6 +77,7 @@ public class Cutter extends Machine {
         }
     }
 
+    // Retourne l'item actuellement dans le cutter (priorité: leftSlot, rightSlot, inputSlot)
     @Override
     public Item getCurrent() {
         if (leftSlot != null) return leftSlot;
@@ -71,6 +85,7 @@ public class Cutter extends Machine {
         return inputSlot;
     }
 
+    // Vide tous les slots
     @Override
     public void clearCurrent() {
         super.clearCurrent();
