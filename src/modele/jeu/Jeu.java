@@ -1,5 +1,10 @@
 package modele.jeu;
 
+import java.io.*;
+import java.util.*;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+
 import modele.plateau.Mine;
 import modele.plateau.Plateau;
 import modele.plateau.Poubelle;
@@ -321,17 +326,165 @@ public class Jeu extends Thread{
         return null;
     }
 
+    // ==================== SAUVEGARDE / CHARGEMENT ====================
+
+    public void sauvegarder() {
+        JFileChooser fileChooser = new JFileChooser(".");
+        if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+                // Sauvegarder l'état du hub
+                writer.write("hub:" + Livraison.getObjectifCourant() + "," + Livraison.getQuantiteRecue());
+                writer.newLine();
+
+                // Sauvegarder toutes les machines
+                for (int x = 0; x < Plateau.SIZE_X; x++) {
+                    for (int y = 0; y < Plateau.SIZE_Y; y++) {
+                        Machine m = plateau.getCases()[x][y].getMachine();
+                        if (m != null && !(m instanceof Livraison)) {
+                            String type = getMachineType(m);
+                            if (type != null) {
+                                writer.write(x + "," + y + "," + type + "," + m.getDirection());
+                                writer.newLine();
+                            }
+                        }
+                    }
+                }
+                JOptionPane.showMessageDialog(null, "Partie sauvegardée !");
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(null, "Erreur lors de la sauvegarde : " + e.getMessage());
+            }
+        }
+    }
+
+    public void charger() {
+        JFileChooser fileChooser = new JFileChooser(".");
+        if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                // Réinitialiser
+                Livraison.reset();
+                plateau = new Plateau();
+
+                String line;
+                int hubObjectif = 0;
+                int hubQuantite = 0;
+                boolean hubDataFound = false;
+
+                while ((line = reader.readLine()) != null) {
+                    if (line.startsWith("hub:")) {
+                        String[] hubData = line.substring(4).split(",");
+                        if (hubData.length >= 2) {
+                            hubObjectif = Integer.parseInt(hubData[0]);
+                            hubQuantite = Integer.parseInt(hubData[1]);
+                            hubDataFound = true;
+                        }
+                    } else {
+                        String[] parts = line.split(",");
+                        if (parts.length >= 4) {
+                            int x = Integer.parseInt(parts[0]);
+                            int y = Integer.parseInt(parts[1]);
+                            String type = parts[2];
+                            Direction dir = Direction.valueOf(parts[3]);
+
+                            Machine m = createMachineFromType(type, dir);
+                            if (m != null) {
+                                plateau.setMachine(x, y, m);
+                            }
+                        }
+                    }
+                }
+
+                // Restaurer l'état du hub
+                if (hubDataFound) {
+                    Livraison.setEtat(hubObjectif, hubQuantite);
+                }
+
+                // Recréer le hub (zone 3x3)
+                ItemShape[] objectifsFormes = {
+                        new ItemShape("C-C-C-C-"),
+                        new ItemShape("c-c-----"),
+                        new ItemShape("--S-S---"),
+                        new ItemShape("CgCg----")
+                };
+                int[] objectifsQuantites = {3, 3, 3, 3};
+                Livraison hubCentral = new Livraison(objectifsFormes, objectifsQuantites);
+
+                int centerX = Plateau.SIZE_X / 2;
+                int centerY = Plateau.SIZE_Y / 2;
+                for (int x = centerX - 1; x <= centerX + 1; x++) {
+                    for (int y = centerY - 1; y <= centerY + 1; y++) {
+                        if (plateau.getCases()[x][y].getMachine() == null) {
+                            plateau.setMachine(x, y, hubCentral);
+                        }
+                    }
+                }
+
+                plateau.forceRefresh();
+                JOptionPane.showMessageDialog(null, "Partie chargée !");
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(null, "Erreur lors du chargement : " + e.getMessage());
+            }
+        }
+    }
+
+    private String getMachineType(Machine m) {
+        if (m instanceof Mine) return "Mine";
+        if (m instanceof Tapis) return "Tapis";
+        if (m instanceof Cutter) return "Cutter";
+        if (m instanceof Rotator) return "Rotator";
+        if (m instanceof AtelierPeinture) return "Painter";
+        if (m instanceof Stacker) return "Stacker";
+        if (m instanceof Poubelle) return "Poubelle";
+        if (m instanceof Balancer) return "Balancer";
+        return null;
+    }
+
+    private Machine createMachineFromType(String type, Direction dir) {
+        switch (type) {
+            case "Mine":
+                Mine mine = new Mine();
+                mine.setDirection(dir);
+                return mine;
+            case "Tapis":
+                return new Tapis(dir);
+            case "Cutter":
+                Cutter cutter = new Cutter();
+                cutter.setDirection(dir);
+                return cutter;
+            case "Rotator":
+                Rotator rotator = new Rotator();
+                rotator.setDirection(dir);
+                return rotator;
+            case "Painter":
+                AtelierPeinture painter = new AtelierPeinture();
+                painter.setDirection(dir);
+                return painter;
+            case "Stacker":
+                Stacker stacker = new Stacker();
+                stacker.setDirection(dir);
+                return stacker;
+            case "Poubelle":
+                return new Poubelle();
+            case "Balancer":
+                return new Balancer();
+            default:
+                return null;
+        }
+    }
+
     public void run() {
         jouerPartie();
     }
 
     public void jouerPartie() {
-        while(true) {
+        while(!Thread.currentThread().isInterrupted()) {
             try {
                 plateau.run();
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                Thread.currentThread().interrupt();
+                break;
             }
         }
     }

@@ -16,10 +16,13 @@ import modele.plateau.*;
 import modele.plateau.Balancer;
 import modele.plateau.BalancerSecondaire;
 import modele.plateau.Direction;
+import controleur.Main;
+
 
 public class VueControleur extends JFrame implements Observer {
     private Plateau plateau;
     private Jeu jeu;
+    private Main mainController;
     private final int sizeX;
     private final int sizeY;
     private int pxCase;
@@ -73,8 +76,9 @@ public class VueControleur extends JFrame implements Observer {
     private Direction currentDragDirection = Direction.North;
     private Direction incomingToLast = null;
 
-    public VueControleur(Jeu _jeu) {
+    public VueControleur(Jeu _jeu, Main _mainController) {
         jeu = _jeu;
+        mainController = _mainController;
         plateau = jeu.getPlateau();
         sizeX = plateau.SIZE_X;
         sizeY = plateau.SIZE_Y;
@@ -84,10 +88,35 @@ public class VueControleur extends JFrame implements Observer {
         chargerLesIcones();
         initToolBar();
         placerLesComposantsGraphiques();
+        initMenu();
 
         plateau.addObserver(this);
         mettreAJourAffichage();
         mettreAJourObjectifs();
+    }
+
+    private void initMenu() {
+        JMenuBar menuBar = new JMenuBar();
+        JMenu fichierMenu = new JMenu("Fichier");
+
+        JMenuItem nouveauItem = new JMenuItem("Nouvelle partie");
+        JMenuItem sauvegarderItem = new JMenuItem("Sauvegarder");
+        JMenuItem chargerItem = new JMenuItem("Charger");
+        JMenuItem quitterItem = new JMenuItem("Quitter");
+
+        nouveauItem.addActionListener(e -> mainController.nouvellePartie());
+        sauvegarderItem.addActionListener(e -> mainController.sauvegarder());
+        chargerItem.addActionListener(e -> mainController.charger());
+        quitterItem.addActionListener(e -> System.exit(0));
+
+        fichierMenu.add(nouveauItem);
+        fichierMenu.add(sauvegarderItem);
+        fichierMenu.add(chargerItem);
+        fichierMenu.addSeparator();
+        fichierMenu.add(quitterItem);
+
+        menuBar.add(fichierMenu);
+        setJMenuBar(menuBar);
     }
 
     private void calculerTailleAdaptative() {

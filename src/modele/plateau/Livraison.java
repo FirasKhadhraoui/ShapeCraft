@@ -15,6 +15,24 @@ public class Livraison extends Machine {
         }
     }
 
+    public static void reset() {
+        quantiteRecue = 0;
+        objectifCourant = 0;
+    }
+
+    public static void setEtat(int objCourant, int qteRecue) {
+        objectifCourant = objCourant;
+        quantiteRecue = qteRecue;
+    }
+
+    public static int getObjectifCourant() {
+        return objectifCourant;
+    }
+
+    public static int getQuantiteRecue() {
+        return quantiteRecue;
+    }
+
     @Override
     public void work() {
         if (!current.isEmpty() && objectifCourant < formesAttendues.length) {
@@ -38,14 +56,6 @@ public class Livraison extends Machine {
                 System.out.println("Livraison : forme incorrecte reçue !");
             }
         }
-    }
-
-    public static int getObjectifCourant() {
-        return objectifCourant;
-    }
-
-    public static int getQuantiteRecue() {
-        return quantiteRecue;
     }
 
     public static int getObjectifRequis() {
