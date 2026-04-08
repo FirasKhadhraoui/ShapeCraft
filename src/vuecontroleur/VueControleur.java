@@ -256,60 +256,33 @@ public class VueControleur extends JFrame implements Observer {
         toolBar.add(Box.createVerticalGlue());
     }
 
-    private String formeToString(String formeCode) {
-        if (formeCode == null || formeCode.equals("None")) return "Aucune";
-
-        StringBuilder sb = new StringBuilder();
-        int nbQuarts = formeCode.length() / 2;
-        for (int i = 0; i < nbQuarts; i++) {
-            char shape = formeCode.charAt(i * 2);
-            char color = formeCode.charAt(i * 2 + 1);
-
-            // Forme
-            switch (shape) {
-                case 'C': sb.append("Carré"); break;
-                case 'c': sb.append("Cercle"); break;
-                case 'F': sb.append("Éventail"); break;
-                case 'S': sb.append("Étoile"); break;
-                case '-': sb.append("Vide"); break;
-                default: sb.append("?");
-            }
-
-            sb.append(" ");
-
-            // Couleur
-            switch (color) {
-                case 'r': sb.append("Rouge"); break;
-                case 'g': sb.append("Vert"); break;
-                case 'b': sb.append("Bleu"); break;
-                case 'y': sb.append("Jaune"); break;
-                case 'p': sb.append("Violet"); break;
-                case 'c': sb.append("Cyan"); break;
-                case 'w': sb.append("Blanc"); break;
-                case '-': sb.append(""); break;
-                default: sb.append("?");
-            }
-
-            if (i < nbQuarts - 1) sb.append(" + ");
-        }
-        return sb.toString();
-    }
-
     private void mettreAJourObjectifs() {
         if (Livraison.isTermine()) {
-            objectifLabel.setText("🎉 Félicitations ! Tous les objectifs atteints ! 🎉");
-            formeAttendueLabel.setText("");
+            objectifLabel.setText("🎉 FELICITATIONS ! 🎉");
+            objectifLabel.setFont(new Font("Arial", Font.BOLD, 16));
+            formeAttendueLabel.setText("Tous les objectifs sont atteints !");
+            formeAttendueLabel.setFont(new Font("Arial", Font.BOLD, 14));
         } else {
             int numero = Livraison.getObjectifNumero();
             int recu = Livraison.getQuantiteRecue();
             int requis = Livraison.getObjectifRequis();
-            String forme = Livraison.getFormeAttendue();
 
+            objectifLabel.setFont(new Font("Arial", Font.BOLD, 14));
             objectifLabel.setText("Objectif " + numero + " : " + recu + " / " + requis + " items");
 
-            // Affichage lisible de la forme attendue
-            String formeLisible = formeToString(forme);
-            formeAttendueLabel.setText("Forme attendue : " + formeLisible);
+            String explication = "";
+            if (numero == 1) {
+                explication = "Objectif 1 : Carré plein";
+            } else if (numero == 2) {
+                explication = "Objectif 2 : Partie droite d'un rond";
+            } else if (numero == 3) {
+                explication = "Objectif 3 : Partie basse d'une étoile";
+            } else if (numero == 4) {
+                explication = "Objectif 4 : Partie droite d'un carré vert";
+            }
+
+            formeAttendueLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+            formeAttendueLabel.setText(explication);
         }
     }
 

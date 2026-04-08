@@ -22,14 +22,15 @@ public class Jeu extends Thread{
     public Jeu() {
         plateau = new Plateau();
 
-        // Définir les objectifs (forme + quantité)
+        // Objectifs : Carré plein, Partie droite d'un rond, Partie basse d'une étoile, Partie droite d'un carré vert
         ItemShape[] objectifsFormes = {
-                new ItemShape("CrCr----"),
-                new ItemShape("CrCr----"),
-                new ItemShape("CrCr----")
+                new ItemShape("C-C-C-C-"),      // Objectif 1: Carré plein
+                new ItemShape("c-c-----"),      // Objectif 2: Partie droite d'un rond
+                new ItemShape("--S-S---"),      // Objectif 3: Partie basse d'une étoile
+                new ItemShape("CgCg----")       // Objectif 4: Partie droite d'un carré vert
         };
 
-        int[] objectifsQuantites = {5, 10, 15};
+        int[] objectifsQuantites = {3, 3, 3, 3};
 
         Livraison hubCentral = new Livraison(objectifsFormes, objectifsQuantites);
 
@@ -67,10 +68,7 @@ public class Jeu extends Thread{
             System.out.println("Action impossible : Cette machine ne peut pas être remplacée. Supprimez-la d'abord (clic droit).");
             return true;
         }
-        if (existante instanceof Tapis && !type.equals("Tapis")) {
-            System.out.println("Action impossible : Supprimez le tapis d'abord (clic droit).");
-            return true;
-        }
+        // Les Tapis peuvent être remplacés (on ne bloque pas)
         return false;
     }
 
@@ -79,15 +77,12 @@ public class Jeu extends Thread{
 
         // Vérifier si la case a un gisement
         if (plateau.getCases()[x][y].getGisement() != null) {
-            ItemShape g = (ItemShape) plateau.getCases()[x][y].getGisement();
-            if (g.isColorItem()) {
-                System.out.println("Impossible : impossible de placer une machine sur un gisement de couleur !");
-                return;
-            }
+            // Seule une mine peut être placée sur un gisement (couleur ou forme)
             if (!type.equals("Mine")) {
                 System.out.println("Impossible : seule une mine peut être placée sur un gisement !");
                 return;
             }
+            // Une mine peut se placer ici (on continue)
         }
 
         switch (type) {
@@ -134,13 +129,23 @@ public class Jeu extends Thread{
             System.out.println("Impossible : pas assez de place pour le balancer !");
             return;
         }
-        if (plateau.getCases()[x2][y2].getMachine() != null) {
-            System.out.println("Impossible : la case adjacente est occupée !");
-            return;
-        }
+
+        // Vérifier si la case adjacente a un gisement
         if (plateau.getCases()[x2][y2].getGisement() != null) {
             System.out.println("Impossible : la case adjacente a un gisement !");
             return;
+        }
+
+        // Si la case adjacente a un tapis, on le supprime
+        Machine existante = plateau.getCases()[x2][y2].getMachine();
+        if (existante != null && !(existante instanceof Tapis)) {
+            System.out.println("Impossible : la case adjacente est occupée par une machine !");
+            return;
+        }
+
+        // Supprimer le tapis si présent
+        if (existante instanceof Tapis) {
+            plateau.setMachine(x2, y2, null);
         }
 
         Balancer balancer = new Balancer();
@@ -194,37 +199,56 @@ public class Jeu extends Thread{
 
         if (m instanceof Balancer) {
             Balancer balancer = (Balancer) m;
-            // Clear old secondary cell
-            int[] secPos = findBalancerSecondaire(balancer);
-            if (secPos != null) {
-                plateau.getCases()[secPos[0]][secPos[1]].setMachine(null);
-            }
-            // Rotate
+
+            // Calculer la nouvelle direction
             Direction[] dirs = {Direction.North, Direction.East, Direction.South, Direction.West};
             Direction cur = balancer.getDirection();
             int idx = 0;
             for (int i = 0; i < dirs.length; i++) {
                 if (dirs[i] == cur) { idx = i; break; }
             }
-            balancer.setDirection(dirs[(idx + 1) % 4]);
-            // Place new secondary
-            Direction newSide = balancer.getDirection().rotate90CW();
+            Direction newDir = dirs[(idx + 1) % 4];
+            Direction newSide = newDir.rotate90CW();
             int nx = x + newSide.getDx();
             int ny = y + newSide.getDy();
-            if (nx >= 0 && nx < Plateau.SIZE_X && ny >= 0 && ny < Plateau.SIZE_Y
-                    && plateau.getCases()[nx][ny].getMachine() == null) {
-                BalancerSecondaire secondaire = new BalancerSecondaire(balancer);
-                plateau.setMachine(nx, ny, secondaire);
-                balancer.secondaryCase = plateau.getCases()[nx][ny];
-            } else {
-                balancer.secondaryCase = null;
-                System.out.println("Avertissement : pas de place pour la case secondaire après rotation.");
+
+            // Vérifier si la nouvelle case secondaire est dans la grille
+            if (nx < 0 || nx >= Plateau.SIZE_X || ny < 0 || ny >= Plateau.SIZE_Y) {
+                System.out.println("Action impossible : la nouvelle position du balancer est en dehors de la grille !");
+                return;
             }
+
+            // Vérifier si la nouvelle case secondaire est libre ou contient un tapis
+            Machine occupante = plateau.getCases()[nx][ny].getMachine();
+            if (occupante != null && !(occupante instanceof Tapis)) {
+                System.out.println("Action impossible : la nouvelle position du balancer est occupée par une machine !");
+                return;
+            }
+
+            // Si c'est un tapis, on le supprime
+            if (occupante instanceof Tapis) {
+                plateau.setMachine(nx, ny, null);
+            }
+
+            // Clear old secondary cell
+            int[] secPos = findBalancerSecondaire(balancer);
+            if (secPos != null) {
+                plateau.getCases()[secPos[0]][secPos[1]].setMachine(null);
+            }
+
+            // Rotate
+            balancer.setDirection(newDir);
+
+            // Place new secondary
+            BalancerSecondaire secondaire = new BalancerSecondaire(balancer);
+            plateau.setMachine(nx, ny, secondaire);
+            balancer.secondaryCase = plateau.getCases()[nx][ny];
+
             plateau.forceRefresh();
             return;
         }
 
-        // Normal rotation
+        // Normal rotation for other machines
         Direction[] dirs = {Direction.North, Direction.East, Direction.South, Direction.West};
         Direction cur = m.getDirection();
         int idx = 0;

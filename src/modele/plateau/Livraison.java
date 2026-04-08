@@ -21,7 +21,6 @@ public class Livraison extends Machine {
             ItemShape recu = (ItemShape) current.getFirst();
             current.removeFirst();
 
-            // Vérifier si la forme correspond à celle attendue pour l'objectif courant
             if (recu.toString().equals(formesAttendues[objectifCourant].toString())) {
                 quantiteRecue++;
                 System.out.println("Livraison : reçu " + quantiteRecue + "/" + quantitesObjectifs[objectifCourant] + " items");
@@ -31,15 +30,12 @@ public class Livraison extends Machine {
                     quantiteRecue = 0;
                     if (objectifCourant < formesAttendues.length) {
                         System.out.println("*** OBJECTIF " + (objectifCourant + 1) + " ATTEINT ! ***");
-                        System.out.println("Nouvelle forme attendue : " + formesAttendues[objectifCourant].toString());
-                        System.out.println("Nouvel objectif : " + quantitesObjectifs[objectifCourant] + " items");
                     } else {
                         System.out.println("*** FÉLICITATIONS ! TOUS LES OBJECTIFS SONT ATTEINTS ! ***");
                     }
                 }
             } else {
-                System.out.println("Livraison : forme incorrecte reçue ! Attendu: " +
-                        formesAttendues[objectifCourant].toString() + " Reçu: " + recu.toString());
+                System.out.println("Livraison : forme incorrecte reçue !");
             }
         }
     }
@@ -53,13 +49,6 @@ public class Livraison extends Machine {
     }
 
     public static int getObjectifRequis() {
-        if (objectifCourant < quantitesObjectifs.length) {
-            return quantitesObjectifs[objectifCourant];
-        }
-        return 0;
-    }
-
-    public static int getObjectifMax() {
         if (objectifCourant < quantitesObjectifs.length) {
             return quantitesObjectifs[objectifCourant];
         }
@@ -83,6 +72,5 @@ public class Livraison extends Machine {
 
     @Override
     public void send() {
-        // La livraison ne renvoie rien
     }
 }
