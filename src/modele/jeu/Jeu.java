@@ -22,22 +22,34 @@ import modele.plateau.Direction;
 import modele.item.Item;
 import modele.item.ItemShape;
 
-public class Jeu extends Thread{
-    private Plateau plateau;
+/**
+ * Classe principale du jeu. Gère le plateau, les machines, les objectifs,
+ * la sauvegarde/chargement et le thread de simulation.
+ */
+public class Jeu extends Thread {
+    private Plateau plateau; // Le plateau de jeu (grille de cases)
 
+    /**
+     * Constructeur : initialise le plateau, les objectifs et le hub.
+     */
     public Jeu() {
         plateau = new Plateau();
 
-        // Objectifs : Carré plein, Partie droite d'un rond, Partie basse d'une étoile, Partie droite d'un carré vert
+        /**
+         * OBJECTIFS DU JEU
+         * Chaque objectif est une forme spécifique à livrer
+         */
         ItemShape[] objectifsFormes = {
-                new ItemShape("C-C-C-C-"),      // Objectif 1: Carré plein
-                new ItemShape("c-c-----"),      // Objectif 2: Partie droite d'un rond
-                new ItemShape("--S-S---"),      // Objectif 3: Partie basse d'une étoile
-                new ItemShape("CgCg----")       // Objectif 4: Partie droite d'un carré vert
+                new ItemShape("C-C-C-C-"),      // Objectif 1: Carré plein (bord haut)
+                new ItemShape("c-c-----"),      // Objectif 2: Partie droite d'un rond (après Cutter)
+                new ItemShape("--S-S---"),      // Objectif 3: Partie basse d'une étoile (après Cutter + Rotator)
+                new ItemShape("CgCg----")       // Objectif 4: Partie droite d'un carré vert (Cutter + Painter)
         };
 
+        // Quantités requises pour chaque objectif
         int[] objectifsQuantites = {3, 3, 3, 3};
 
+        // Création du hub (zone de livraison)
         Livraison hubCentral = new Livraison(objectifsFormes, objectifsQuantites);
 
         // Placement du Hub au centre de la grille (zone 3x3)
@@ -49,24 +61,34 @@ public class Jeu extends Thread{
             }
         }
 
-        start();
+        start(); // Démarre le thread de simulation
     }
 
+    /**
+     * Retourne le plateau de jeu.
+     */
     public Plateau getPlateau() {
         return plateau;
     }
 
-    /** Returns true if the cell cannot be built on. */
+    /**
+     * Vérifie si une case est bloquée (ne peut pas être remplacée).
+     * @return true si la case ne peut pas être construite
+     */
     private boolean cellBloquee(int x, int y, String type) {
         Machine existante = plateau.getCases()[x][y].getMachine();
+
+        // Le Hub ne peut jamais être remplacé
         if (existante instanceof Livraison) {
             System.out.println("Action impossible : Le Hub ne peut pas être remplacé.");
             return true;
         }
+        // Une mine ne peut pas être remplacée (il faut la supprimer d'abord)
         if (existante instanceof Mine) {
             System.out.println("Action impossible : Une mine ne peut pas être remplacée. Supprimez-la d'abord (clic droit).");
             return true;
         }
+        // Les machines spéciales ne peuvent pas être remplacées
         if (existante instanceof Cutter || existante instanceof Rotator ||
                 existante instanceof AtelierPeinture || existante instanceof Stacker ||
                 existante instanceof Poubelle || existante instanceof Balancer ||
@@ -78,17 +100,22 @@ public class Jeu extends Thread{
         return false;
     }
 
+    /**
+     * Place une machine sur le plateau.
+     * @param x coordonnée X
+     * @param y coordonnée Y
+     * @param type type de machine ("Mine", "Tapis", "Cutter", etc.)
+     */
     public void placerMachine(int x, int y, String type) {
         if (cellBloquee(x, y, type)) return;
 
         // Vérifier si la case a un gisement
         if (plateau.getCases()[x][y].getGisement() != null) {
-            // Seule une mine peut être placée sur un gisement (couleur ou forme)
+            // Seule une mine peut être placée sur un gisement
             if (!type.equals("Mine")) {
                 System.out.println("Impossible : seule une mine peut être placée sur un gisement !");
                 return;
             }
-            // Une mine peut se placer ici (on continue)
         }
 
         switch (type) {
@@ -125,18 +152,20 @@ public class Jeu extends Thread{
         }
     }
 
+    /**
+     * Place un Balancer (machine sur 2 cases).
+     * Le Balancer occupe la case principale et la case à l'Est.
+     */
     private void placerBalancer(int x, int y) {
-        // Default direction is North; secondary cell is to the East
         Direction sideDir = Direction.North.rotate90CW(); // = East
         int x2 = x + sideDir.getDx();
         int y2 = y + sideDir.getDy();
 
+        // Vérifications de placement
         if (x2 < 0 || x2 >= Plateau.SIZE_X || y2 < 0 || y2 >= Plateau.SIZE_Y) {
             System.out.println("Impossible : pas assez de place pour le balancer !");
             return;
         }
-
-        // Vérifier si la case adjacente a un gisement
         if (plateau.getCases()[x2][y2].getGisement() != null) {
             System.out.println("Impossible : la case adjacente a un gisement !");
             return;
@@ -148,12 +177,11 @@ public class Jeu extends Thread{
             System.out.println("Impossible : la case adjacente est occupée par une machine !");
             return;
         }
-
-        // Supprimer le tapis si présent
         if (existante instanceof Tapis) {
             plateau.setMachine(x2, y2, null);
         }
 
+        // Création des deux parties du Balancer
         Balancer balancer = new Balancer();
         BalancerSecondaire secondaire = new BalancerSecondaire(balancer);
         plateau.setMachine(x, y, balancer);
@@ -161,6 +189,9 @@ public class Jeu extends Thread{
         balancer.secondaryCase = plateau.getCases()[x2][y2];
     }
 
+    /**
+     * Place une machine avec une direction spécifique (pour les tapis).
+     */
     public void placerMachine(int x, int y, String type, Direction direction) {
         if (cellBloquee(x, y, type)) return;
 
@@ -176,6 +207,9 @@ public class Jeu extends Thread{
         plateau.setMachine(x, y, new Tapis(direction));
     }
 
+    /**
+     * Place un tapis en coin (avec direction entrante et sortante).
+     */
     public void placerTapisCorner(int x, int y, Direction incoming, Direction outgoing) {
         if (cellBloquee(x, y, "Tapis")) return;
 
@@ -187,15 +221,22 @@ public class Jeu extends Thread{
         plateau.setMachine(x, y, new Tapis(incoming, outgoing));
     }
 
+    /**
+     * Rotation d'une mine (appelle rotateMachine).
+     */
     public void rotateMine(int x, int y) {
         rotateMachine(x, y);
     }
 
+    /**
+     * Rotation d'une machine (change sa direction).
+     * Gère spécialement le Balancer (2 cases).
+     */
     public void rotateMachine(int x, int y) {
         Machine m = plateau.getCases()[x][y].getMachine();
         if (m == null) return;
 
-        // If clicking secondary cell, redirect to primary
+        // Si on clique sur la case secondaire du Balancer, on redirige vers la case principale
         if (m instanceof BalancerSecondaire) {
             Balancer owner = ((BalancerSecondaire) m).owner;
             int[] pos = findMachinePosition(owner);
@@ -203,10 +244,11 @@ public class Jeu extends Thread{
             return;
         }
 
+        // Rotation spéciale pour le Balancer (déplace la case secondaire)
         if (m instanceof Balancer) {
             Balancer balancer = (Balancer) m;
 
-            // Calculer la nouvelle direction
+            // Calcul de la nouvelle direction
             Direction[] dirs = {Direction.North, Direction.East, Direction.South, Direction.West};
             Direction cur = balancer.getDirection();
             int idx = 0;
@@ -218,34 +260,29 @@ public class Jeu extends Thread{
             int nx = x + newSide.getDx();
             int ny = y + newSide.getDy();
 
-            // Vérifier si la nouvelle case secondaire est dans la grille
+            // Vérifications
             if (nx < 0 || nx >= Plateau.SIZE_X || ny < 0 || ny >= Plateau.SIZE_Y) {
                 System.out.println("Action impossible : la nouvelle position du balancer est en dehors de la grille !");
                 return;
             }
 
-            // Vérifier si la nouvelle case secondaire est libre ou contient un tapis
             Machine occupante = plateau.getCases()[nx][ny].getMachine();
             if (occupante != null && !(occupante instanceof Tapis)) {
                 System.out.println("Action impossible : la nouvelle position du balancer est occupée par une machine !");
                 return;
             }
-
-            // Si c'est un tapis, on le supprime
             if (occupante instanceof Tapis) {
                 plateau.setMachine(nx, ny, null);
             }
 
-            // Clear old secondary cell
+            // Suppression de l'ancienne case secondaire
             int[] secPos = findBalancerSecondaire(balancer);
             if (secPos != null) {
                 plateau.getCases()[secPos[0]][secPos[1]].setMachine(null);
             }
 
-            // Rotate
+            // Rotation et placement de la nouvelle case secondaire
             balancer.setDirection(newDir);
-
-            // Place new secondary
             BalancerSecondaire secondaire = new BalancerSecondaire(balancer);
             plateau.setMachine(nx, ny, secondaire);
             balancer.secondaryCase = plateau.getCases()[nx][ny];
@@ -254,7 +291,7 @@ public class Jeu extends Thread{
             return;
         }
 
-        // Normal rotation for other machines
+        // Rotation normale pour les autres machines
         Direction[] dirs = {Direction.North, Direction.East, Direction.South, Direction.West};
         Direction cur = m.getDirection();
         int idx = 0;
@@ -265,18 +302,22 @@ public class Jeu extends Thread{
         plateau.forceRefresh();
     }
 
+    /**
+     * Supprime une machine du plateau (clic droit).
+     */
     public void supprimerMachine(int x, int y) {
         Case c = plateau.getCases()[x][y];
         Machine m = c.getMachine();
 
         if (m != null) {
+            // Le Hub ne peut pas être supprimé
             if (m instanceof Livraison) {
                 System.out.println("Action impossible : Le Hub ne peut pas être supprimé.");
                 return;
             }
 
+            // Suppression d'un Balancer : supprime aussi la case secondaire
             if (m instanceof Balancer) {
-                // Also remove secondary cell
                 int[] secPos = findBalancerSecondaire((Balancer) m);
                 if (secPos != null) {
                     plateau.getCases()[secPos[0]][secPos[1]].getMachine().clearCurrent();
@@ -284,8 +325,8 @@ public class Jeu extends Thread{
                 }
             }
 
+            // Suppression de la case secondaire : supprime aussi la case principale
             if (m instanceof BalancerSecondaire) {
-                // Also remove primary cell
                 Balancer owner = ((BalancerSecondaire) m).owner;
                 int[] priPos = findMachinePosition(owner);
                 if (priPos != null) {
@@ -302,7 +343,9 @@ public class Jeu extends Thread{
         plateau.forceRefresh();
     }
 
-    /** Finds the grid position of a given machine instance, or null if not found. */
+    /**
+     * Trouve la position d'une machine sur le plateau.
+     */
     private int[] findMachinePosition(Machine target) {
         for (int cx = 0; cx < Plateau.SIZE_X; cx++) {
             for (int cy = 0; cy < Plateau.SIZE_Y; cy++) {
@@ -314,7 +357,9 @@ public class Jeu extends Thread{
         return null;
     }
 
-    /** Finds the grid position of the BalancerSecondaire belonging to a Balancer. */
+    /**
+     * Trouve la position de la case secondaire d'un Balancer.
+     */
     private int[] findBalancerSecondaire(Balancer balancer) {
         for (int cx = 0; cx < Plateau.SIZE_X; cx++) {
             for (int cy = 0; cy < Plateau.SIZE_Y; cy++) {
@@ -327,8 +372,11 @@ public class Jeu extends Thread{
         return null;
     }
 
-    // ==================== SAUVEGARDE / CHARGEMENT ====================
+    //  SAUVEGARDE / CHARGEMENT
 
+    /**
+     * Récupère la chaîne représentant l'item sur une machine (pour sauvegarde).
+     */
     private String getItemsString(Machine m) {
         StringBuilder sb = new StringBuilder();
         Item current = m.getCurrent();
@@ -338,6 +386,9 @@ public class Jeu extends Thread{
         return sb.toString();
     }
 
+    /**
+     * Restaure l'item sur une machine après chargement.
+     */
     private void restoreItems(Machine m, String itemsStr) {
         if (itemsStr != null && !itemsStr.isEmpty() && m instanceof Tapis) {
             ItemShape item = new ItemShape(itemsStr);
@@ -345,16 +396,19 @@ public class Jeu extends Thread{
         }
     }
 
+    /**
+     * Sauvegarde la partie dans un fichier.
+     */
     public void sauvegarder() {
         JFileChooser fileChooser = new JFileChooser(".");
         if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-                // Sauvegarder l'état du hub
+                // Sauvegarde de l'état du hub (objectif courant, quantité reçue)
                 writer.write("hub:" + Livraison.getObjectifCourant() + "," + Livraison.getQuantiteRecue());
                 writer.newLine();
 
-                // Sauvegarder toutes les machines
+                // Sauvegarde de toutes les machines (sauf le hub)
                 for (int x = 0; x < Plateau.SIZE_X; x++) {
                     for (int y = 0; y < Plateau.SIZE_Y; y++) {
                         Machine m = plateau.getCases()[x][y].getMachine();
@@ -375,12 +429,15 @@ public class Jeu extends Thread{
         }
     }
 
+    /**
+     * Charge une partie depuis un fichier.
+     */
     public void charger() {
         JFileChooser fileChooser = new JFileChooser(".");
         if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
             try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-                // Réinitialiser
+                // Réinitialisation
                 Livraison.reset();
                 plateau = new Plateau();
 
@@ -391,6 +448,7 @@ public class Jeu extends Thread{
 
                 while ((line = reader.readLine()) != null) {
                     if (line.startsWith("hub:")) {
+                        // Lecture de l'état du hub
                         String[] hubData = line.substring(4).split(",");
                         if (hubData.length >= 2) {
                             hubObjectif = Integer.parseInt(hubData[0]);
@@ -398,6 +456,7 @@ public class Jeu extends Thread{
                             hubDataFound = true;
                         }
                     } else {
+                        // Lecture d'une machine
                         String[] parts = line.split(",");
                         if (parts.length >= 4) {
                             int x = Integer.parseInt(parts[0]);
@@ -415,12 +474,12 @@ public class Jeu extends Thread{
                     }
                 }
 
-                // Restaurer l'état du hub
+                // Restauration de l'état du hub
                 if (hubDataFound) {
                     Livraison.setEtat(hubObjectif, hubQuantite);
                 }
 
-                // Recréer le hub (zone 3x3)
+                // Recréation du hub (zone 3x3)
                 ItemShape[] objectifsFormes = {
                         new ItemShape("C-C-C-C-"),
                         new ItemShape("c-c-----"),
@@ -448,6 +507,9 @@ public class Jeu extends Thread{
         }
     }
 
+    /**
+     * Retourne le type d'une machine sous forme de chaîne.
+     */
     private String getMachineType(Machine m) {
         if (m instanceof Mine) return "Mine";
         if (m instanceof Tapis) return "Tapis";
@@ -460,6 +522,9 @@ public class Jeu extends Thread{
         return null;
     }
 
+    /**
+     * Crée une machine à partir de son type et de sa direction.
+     */
     private Machine createMachineFromType(String type, Direction dir) {
         switch (type) {
             case "Mine":
@@ -493,15 +558,23 @@ public class Jeu extends Thread{
         }
     }
 
+    /**
+     * Thread principal : lance la simulation.
+     */
+    @Override
     public void run() {
         jouerPartie();
     }
 
+    /**
+     * Boucle principale de simulation.
+     * À chaque seconde, le plateau est mis à jour.
+     */
     public void jouerPartie() {
-        while(!Thread.currentThread().isInterrupted()) {
+        while (!Thread.currentThread().isInterrupted()) {
             try {
-                plateau.run();
-                Thread.sleep(1000);
+                plateau.run();      // Exécute toutes les machines
+                Thread.sleep(1000); // Attend 1 seconde
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
