@@ -19,6 +19,7 @@ import modele.plateau.Balancer;
 import modele.plateau.BalancerSecondaire;
 import modele.plateau.Case;
 import modele.plateau.Direction;
+import modele.item.Item;
 import modele.item.ItemShape;
 
 public class Jeu extends Thread{
@@ -328,6 +329,22 @@ public class Jeu extends Thread{
 
     // ==================== SAUVEGARDE / CHARGEMENT ====================
 
+    private String getItemsString(Machine m) {
+        StringBuilder sb = new StringBuilder();
+        Item current = m.getCurrent();
+        if (current instanceof ItemShape) {
+            sb.append(((ItemShape) current).toString());
+        }
+        return sb.toString();
+    }
+
+    private void restoreItems(Machine m, String itemsStr) {
+        if (itemsStr != null && !itemsStr.isEmpty() && m instanceof Tapis) {
+            ItemShape item = new ItemShape(itemsStr);
+            m.receive(item, m.getDirection());
+        }
+    }
+
     public void sauvegarder() {
         JFileChooser fileChooser = new JFileChooser(".");
         if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
@@ -344,7 +361,8 @@ public class Jeu extends Thread{
                         if (m != null && !(m instanceof Livraison)) {
                             String type = getMachineType(m);
                             if (type != null) {
-                                writer.write(x + "," + y + "," + type + "," + m.getDirection());
+                                String items = getItemsString(m);
+                                writer.write(x + "," + y + "," + type + "," + m.getDirection() + "," + items);
                                 writer.newLine();
                             }
                         }
@@ -386,10 +404,12 @@ public class Jeu extends Thread{
                             int y = Integer.parseInt(parts[1]);
                             String type = parts[2];
                             Direction dir = Direction.valueOf(parts[3]);
+                            String itemsStr = parts.length > 4 ? parts[4] : "";
 
                             Machine m = createMachineFromType(type, dir);
                             if (m != null) {
                                 plateau.setMachine(x, y, m);
+                                restoreItems(m, itemsStr);
                             }
                         }
                     }

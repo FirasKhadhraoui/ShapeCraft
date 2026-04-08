@@ -107,7 +107,7 @@ public class VueControleur extends JFrame implements Observer {
         nouveauItem.addActionListener(e -> mainController.nouvellePartie());
         sauvegarderItem.addActionListener(e -> mainController.sauvegarder());
         chargerItem.addActionListener(e -> mainController.charger());
-        quitterItem.addActionListener(e -> System.exit(0));
+        quitterItem.addActionListener(e -> mainController.quitter());
 
         fichierMenu.add(nouveauItem);
         fichierMenu.add(sauvegarderItem);
@@ -317,7 +317,7 @@ public class VueControleur extends JFrame implements Observer {
 
     private void placerLesComposantsGraphiques() {
         setTitle("ShapeCraft");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
 
