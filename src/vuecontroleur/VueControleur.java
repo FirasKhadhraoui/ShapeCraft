@@ -13,6 +13,8 @@ import modele.item.ItemShape;
 import modele.item.SubShape;
 import modele.jeu.Jeu;
 import modele.plateau.*;
+import modele.plateau.Balancer;
+import modele.plateau.BalancerSecondaire;
 import modele.plateau.Direction;
 
 public class VueControleur extends JFrame implements Observer {
@@ -44,6 +46,7 @@ public class VueControleur extends JFrame implements Observer {
     private Image icoRotater;
     private Image icoPainter;
     private Image icoStacker;
+    private Image icoBalancer;
 
     // Composants de la boîte à outils
     private JToolBar toolBar;
@@ -54,6 +57,7 @@ public class VueControleur extends JFrame implements Observer {
     private JButton btnRotater;
     private JButton btnPainter;
     private JButton btnStacker;
+    private JButton btnBalancer;
     private String machineSelectionnee = "Tapis";
 
     // Composants pour l'affichage des objectifs
@@ -120,6 +124,7 @@ public class VueControleur extends JFrame implements Observer {
         icoRotater = new ImageIcon("./data/sprites/buildings/rotater.png").getImage();
         icoPainter = new ImageIcon("./data/sprites/buildings/painter.png").getImage();
         icoStacker = new ImageIcon("./data/sprites/buildings/stacker.png").getImage();
+        icoBalancer = new ImageIcon("./data/sprites/buildings/balancer.png").getImage();
     }
 
     private ImageIcon resizeIcon(ImageIcon icon, int width, int height) {
@@ -143,6 +148,7 @@ public class VueControleur extends JFrame implements Observer {
         ImageIcon rotaterIcon = resizeIcon(new ImageIcon("./data/sprites/buildings/rotater.png"), btnWidth - 20, btnHeight - 40);
         ImageIcon painterIcon = resizeIcon(new ImageIcon("./data/sprites/buildings/painter.png"), btnWidth - 20, btnHeight - 40);
         ImageIcon stackerIcon = resizeIcon(new ImageIcon("./data/sprites/buildings/stacker.png"), btnWidth - 20, btnHeight - 40);
+        ImageIcon balancerIcon = resizeIcon(new ImageIcon("./data/sprites/buildings/balancer.png"), btnWidth - 20, btnHeight - 40);
 
         btnMine = new JButton("Mine", mineIcon);
         btnTapis = new JButton("Tapis", tapisIcon);
@@ -151,6 +157,7 @@ public class VueControleur extends JFrame implements Observer {
         btnRotater = new JButton("Rotator", rotaterIcon);
         btnPainter = new JButton("Painter", painterIcon);
         btnStacker = new JButton("Stacker", stackerIcon);
+        btnBalancer = new JButton("Balancer", balancerIcon);
 
         Dimension buttonSize = new Dimension(btnWidth, btnHeight);
         btnMine.setPreferredSize(buttonSize);
@@ -174,6 +181,9 @@ public class VueControleur extends JFrame implements Observer {
         btnStacker.setPreferredSize(buttonSize);
         btnStacker.setMaximumSize(buttonSize);
         btnStacker.setMinimumSize(buttonSize);
+        btnBalancer.setPreferredSize(buttonSize);
+        btnBalancer.setMaximumSize(buttonSize);
+        btnBalancer.setMinimumSize(buttonSize);
 
         btnMine.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnMine.setHorizontalTextPosition(SwingConstants.CENTER);
@@ -189,6 +199,8 @@ public class VueControleur extends JFrame implements Observer {
         btnPainter.setHorizontalTextPosition(SwingConstants.CENTER);
         btnStacker.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnStacker.setHorizontalTextPosition(SwingConstants.CENTER);
+        btnBalancer.setVerticalTextPosition(SwingConstants.BOTTOM);
+        btnBalancer.setHorizontalTextPosition(SwingConstants.CENTER);
 
         btnMine.setToolTipText("Mine - à placer sur un gisement");
         btnTapis.setToolTipText("Tapis - transporte les items");
@@ -197,6 +209,7 @@ public class VueControleur extends JFrame implements Observer {
         btnRotater.setToolTipText("Rotator - fait pivoter les formes");
         btnPainter.setToolTipText("Painter - colore les formes");
         btnStacker.setToolTipText("Stacker - empile les formes");
+        btnBalancer.setToolTipText("Balancer - répartit les items entre deux sorties");
 
         btnMine.addActionListener(e -> {
             machineSelectionnee = "Mine";
@@ -226,6 +239,10 @@ public class VueControleur extends JFrame implements Observer {
             machineSelectionnee = "Stacker";
             System.out.println("Machine sélectionnée : Stacker");
         });
+        btnBalancer.addActionListener(e -> {
+            machineSelectionnee = "Balancer";
+            System.out.println("Machine sélectionnée : Balancer");
+        });
 
         toolBar.add(btnMine);
         toolBar.add(btnTapis);
@@ -234,6 +251,7 @@ public class VueControleur extends JFrame implements Observer {
         toolBar.add(btnRotater);
         toolBar.add(btnPainter);
         toolBar.add(btnStacker);
+        toolBar.add(btnBalancer);
 
         toolBar.add(Box.createVerticalGlue());
     }
@@ -517,6 +535,7 @@ public class VueControleur extends JFrame implements Observer {
                 tabIP[x][y].setShape(null);
                 tabIP[x][y].setBackgroundRotation(0);
                 tabIP[x][y].setCutHalf(ImagePanel.CutHalf.NONE);
+                tabIP[x][y].setBackgroundHalf(ImagePanel.BackgroundHalf.NONE);
 
                 if (x < 2 && y < 2) {
                     tabIP[x][y].setImageBackground(icoRed);
@@ -561,6 +580,9 @@ public class VueControleur extends JFrame implements Observer {
                     } else if (m instanceof Stacker) {
                         tabIP[x][y].setBackgroundRotation(directionToRotation(m.getDirection()));
                         tabIP[x][y].setImageBackground(icoStacker);
+                    } else if (m instanceof Balancer) {
+                        tabIP[x][y].setBackgroundRotation(directionToRotation(m.getDirection()));
+                        tabIP[x][y].setImageBackground(icoBalancer);
                     }
 
                     Item current = m.getCurrent();
@@ -597,6 +619,22 @@ public class VueControleur extends JFrame implements Observer {
                 }
             }
         }
+        // Second pass: render secondary cells for 2-cell Balancer
+        for (int x = 0; x < sizeX; x++) {
+            for (int y = 0; y < sizeY; y++) {
+                Machine m = plateau.getCases()[x][y].getMachine();
+                if (m instanceof Balancer) {
+                    Direction sideDir = m.getDirection().rotate90CW();
+                    int x2 = x + sideDir.getDx();
+                    int y2 = y + sideDir.getDy();
+                    if (x2 >= 0 && x2 < sizeX && y2 >= 0 && y2 < sizeY) {
+                        tabIP[x2][y2].setImageBackground(icoBalancer);
+                        tabIP[x2][y2].setBackgroundRotation(directionToRotation(m.getDirection()));
+                    }
+                }
+            }
+        }
+
         grilleIP.repaint();
     }
 

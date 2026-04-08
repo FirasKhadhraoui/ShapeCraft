@@ -9,6 +9,7 @@ import java.awt.image.BufferedImage;
 
 public class ImagePanel extends JPanel {
     public enum CutHalf { NONE, LEFT, RIGHT, TOP, BOTTOM }
+    public enum BackgroundHalf { NONE, LEFT, RIGHT }
 
     private Image imgBackground;
     private Image imgFront;
@@ -16,6 +17,12 @@ public class ImagePanel extends JPanel {
     private ItemShape shape;
     private double backgroundRotation = 0;
     private CutHalf cutHalf = CutHalf.NONE;
+    private BackgroundHalf backgroundHalf = BackgroundHalf.NONE;
+
+    public void setBackgroundHalf(BackgroundHalf bh) {
+        this.backgroundHalf = bh;
+        repaint();
+    }
 
     public void setFrontTint(Color tint) {
         this.frontTint = tint;
@@ -68,16 +75,20 @@ public class ImagePanel extends JPanel {
         g.drawRoundRect(bordure, bordure, widthBack, heigthBack, bordure, bordure);
 
         if (imgBackground != null) {
-            if (backgroundRotation == 0) {
-                g.drawImage(imgBackground, xBack, yBack, widthBack, heigthBack, this);
-            } else {
-                Graphics2D g2d = (Graphics2D) g.create();
+            Graphics2D g2d = (Graphics2D) g.create();
+            // Clip to left or right half in screen space (before rotation)
+            if (backgroundHalf == BackgroundHalf.LEFT) {
+                g2d.clipRect(xBack, yBack, widthBack / 2, heigthBack);
+            } else if (backgroundHalf == BackgroundHalf.RIGHT) {
+                g2d.clipRect(xBack + widthBack / 2, yBack, widthBack / 2, heigthBack);
+            }
+            if (backgroundRotation != 0) {
                 double cx = xBack + widthBack / 2.0;
                 double cy = yBack + heigthBack / 2.0;
                 g2d.rotate(backgroundRotation, cx, cy);
-                g2d.drawImage(imgBackground, xBack, yBack, widthBack, heigthBack, this);
-                g2d.dispose();
             }
+            g2d.drawImage(imgBackground, xBack, yBack, widthBack, heigthBack, this);
+            g2d.dispose();
         }
 
         if (imgFront != null) {

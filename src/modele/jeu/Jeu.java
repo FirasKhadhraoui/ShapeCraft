@@ -10,6 +10,8 @@ import modele.plateau.Cutter;
 import modele.plateau.Rotator;
 import modele.plateau.AtelierPeinture;
 import modele.plateau.Stacker;
+import modele.plateau.Balancer;
+import modele.plateau.BalancerSecondaire;
 import modele.plateau.Case;
 import modele.plateau.Direction;
 import modele.item.ItemShape;
@@ -47,34 +49,41 @@ public class Jeu extends Thread{
         return plateau;
     }
 
-    public void placerMachine(int x, int y, String type) {
-        Machine nouvelleMachine = null;
+    /** Returns true if the cell cannot be built on. */
+    private boolean cellBloquee(int x, int y, String type) {
         Machine existante = plateau.getCases()[x][y].getMachine();
-
-        // Empêcher de remplacer le Hub
         if (existante instanceof Livraison) {
             System.out.println("Action impossible : Le Hub ne peut pas être remplacé.");
-            return;
+            return true;
         }
-
-        // Empêcher de remplacer une Mine
         if (existante instanceof Mine) {
             System.out.println("Action impossible : Une mine ne peut pas être remplacée. Supprimez-la d'abord (clic droit).");
-            return;
+            return true;
         }
-
-        // Empêcher de remplacer les machines spéciales
         if (existante instanceof Cutter || existante instanceof Rotator ||
                 existante instanceof AtelierPeinture || existante instanceof Stacker ||
-                existante instanceof Poubelle) {
+                existante instanceof Poubelle || existante instanceof Balancer ||
+                existante instanceof BalancerSecondaire) {
             System.out.println("Action impossible : Cette machine ne peut pas être remplacée. Supprimez-la d'abord (clic droit).");
-            return;
+            return true;
         }
+        if (existante instanceof Tapis && !type.equals("Tapis")) {
+            System.out.println("Action impossible : Supprimez le tapis d'abord (clic droit).");
+            return true;
+        }
+        return false;
+    }
 
-        // Les Tapis peuvent être remplacés (on continue)
+    public void placerMachine(int x, int y, String type) {
+        if (cellBloquee(x, y, type)) return;
 
-        // Vérifier si la case a un gisement - SEULE UNE MINE PEUT ÊTRE PLACÉE
+        // Vérifier si la case a un gisement
         if (plateau.getCases()[x][y].getGisement() != null) {
+            ItemShape g = (ItemShape) plateau.getCases()[x][y].getGisement();
+            if (g.isColorItem()) {
+                System.out.println("Impossible : impossible de placer une machine sur un gisement de couleur !");
+                return;
+            }
             if (!type.equals("Mine")) {
                 System.out.println("Impossible : seule une mine peut être placée sur un gisement !");
                 return;
@@ -84,64 +93,66 @@ public class Jeu extends Thread{
         switch (type) {
             case "Mine":
                 if (plateau.getCases()[x][y].getGisement() != null) {
-                    nouvelleMachine = new Mine();
+                    plateau.setMachine(x, y, new Mine());
                 } else {
                     System.out.println("Impossible : pas de gisement ici !");
-                    return;
                 }
                 break;
             case "Tapis":
-                nouvelleMachine = new Tapis();
+                plateau.setMachine(x, y, new Tapis());
                 break;
             case "Poubelle":
-                nouvelleMachine = new Poubelle();
+                plateau.setMachine(x, y, new Poubelle());
                 break;
             case "Cutter":
-                nouvelleMachine = new Cutter();
+                plateau.setMachine(x, y, new Cutter());
                 break;
             case "Rotater":
-                nouvelleMachine = new Rotator();
+                plateau.setMachine(x, y, new Rotator());
                 break;
             case "Painter":
-                nouvelleMachine = new AtelierPeinture();
+                plateau.setMachine(x, y, new AtelierPeinture());
                 break;
             case "Stacker":
-                nouvelleMachine = new Stacker();
+                plateau.setMachine(x, y, new Stacker());
+                break;
+            case "Balancer":
+                placerBalancer(x, y);
                 break;
             default:
                 System.out.println("Type de machine inconnu : " + type);
-                return;
-        }
-
-        if (nouvelleMachine != null) {
-            plateau.setMachine(x, y, nouvelleMachine);
         }
     }
 
+    private void placerBalancer(int x, int y) {
+        // Default direction is North; secondary cell is to the East
+        Direction sideDir = Direction.North.rotate90CW(); // = East
+        int x2 = x + sideDir.getDx();
+        int y2 = y + sideDir.getDy();
+
+        if (x2 < 0 || x2 >= Plateau.SIZE_X || y2 < 0 || y2 >= Plateau.SIZE_Y) {
+            System.out.println("Impossible : pas assez de place pour le balancer !");
+            return;
+        }
+        if (plateau.getCases()[x2][y2].getMachine() != null) {
+            System.out.println("Impossible : la case adjacente est occupée !");
+            return;
+        }
+        if (plateau.getCases()[x2][y2].getGisement() != null) {
+            System.out.println("Impossible : la case adjacente a un gisement !");
+            return;
+        }
+
+        Balancer balancer = new Balancer();
+        BalancerSecondaire secondaire = new BalancerSecondaire(balancer);
+        plateau.setMachine(x, y, balancer);
+        plateau.setMachine(x2, y2, secondaire);
+        balancer.secondaryCase = plateau.getCases()[x2][y2];
+    }
+
     public void placerMachine(int x, int y, String type, Direction direction) {
-        Machine existante = plateau.getCases()[x][y].getMachine();
+        if (cellBloquee(x, y, type)) return;
 
-        // Empêcher de remplacer le Hub
-        if (existante instanceof Livraison) {
-            System.out.println("Action impossible : Le Hub ne peut pas être remplacé.");
-            return;
-        }
-
-        // Empêcher de remplacer une Mine
-        if (existante instanceof Mine) {
-            System.out.println("Action impossible : Une mine ne peut pas être remplacée.");
-            return;
-        }
-
-        // Empêcher de remplacer les machines spéciales
-        if (existante instanceof Cutter || existante instanceof Rotator ||
-                existante instanceof AtelierPeinture || existante instanceof Stacker ||
-                existante instanceof Poubelle) {
-            System.out.println("Action impossible : Cette machine ne peut pas être remplacée. Supprimez-la d'abord (clic droit).");
-            return;
-        }
-
-        // Vérifier si la case a un gisement - SEULE UNE MINE PEUT ÊTRE PLACÉE
         if (plateau.getCases()[x][y].getGisement() != null) {
             System.out.println("Impossible : seule une mine peut être placée sur un gisement !");
             return;
@@ -155,29 +166,8 @@ public class Jeu extends Thread{
     }
 
     public void placerTapisCorner(int x, int y, Direction incoming, Direction outgoing) {
-        Machine existante = plateau.getCases()[x][y].getMachine();
+        if (cellBloquee(x, y, "Tapis")) return;
 
-        // Empêcher de remplacer le Hub
-        if (existante instanceof Livraison) {
-            System.out.println("Action impossible : Le Hub ne peut pas être remplacé.");
-            return;
-        }
-
-        // Empêcher de remplacer une Mine
-        if (existante instanceof Mine) {
-            System.out.println("Action impossible : Une mine ne peut pas être remplacée.");
-            return;
-        }
-
-        // Empêcher de remplacer les machines spéciales
-        if (existante instanceof Cutter || existante instanceof Rotator ||
-                existante instanceof AtelierPeinture || existante instanceof Stacker ||
-                existante instanceof Poubelle) {
-            System.out.println("Action impossible : Cette machine ne peut pas être remplacée. Supprimez-la d'abord (clic droit).");
-            return;
-        }
-
-        // Vérifier si la case a un gisement - SEULE UNE MINE PEUT ÊTRE PLACÉE
         if (plateau.getCases()[x][y].getGisement() != null) {
             System.out.println("Impossible : seule une mine peut être placée sur un gisement !");
             return;
@@ -193,6 +183,48 @@ public class Jeu extends Thread{
     public void rotateMachine(int x, int y) {
         Machine m = plateau.getCases()[x][y].getMachine();
         if (m == null) return;
+
+        // If clicking secondary cell, redirect to primary
+        if (m instanceof BalancerSecondaire) {
+            Balancer owner = ((BalancerSecondaire) m).owner;
+            int[] pos = findMachinePosition(owner);
+            if (pos != null) rotateMachine(pos[0], pos[1]);
+            return;
+        }
+
+        if (m instanceof Balancer) {
+            Balancer balancer = (Balancer) m;
+            // Clear old secondary cell
+            int[] secPos = findBalancerSecondaire(balancer);
+            if (secPos != null) {
+                plateau.getCases()[secPos[0]][secPos[1]].setMachine(null);
+            }
+            // Rotate
+            Direction[] dirs = {Direction.North, Direction.East, Direction.South, Direction.West};
+            Direction cur = balancer.getDirection();
+            int idx = 0;
+            for (int i = 0; i < dirs.length; i++) {
+                if (dirs[i] == cur) { idx = i; break; }
+            }
+            balancer.setDirection(dirs[(idx + 1) % 4]);
+            // Place new secondary
+            Direction newSide = balancer.getDirection().rotate90CW();
+            int nx = x + newSide.getDx();
+            int ny = y + newSide.getDy();
+            if (nx >= 0 && nx < Plateau.SIZE_X && ny >= 0 && ny < Plateau.SIZE_Y
+                    && plateau.getCases()[nx][ny].getMachine() == null) {
+                BalancerSecondaire secondaire = new BalancerSecondaire(balancer);
+                plateau.setMachine(nx, ny, secondaire);
+                balancer.secondaryCase = plateau.getCases()[nx][ny];
+            } else {
+                balancer.secondaryCase = null;
+                System.out.println("Avertissement : pas de place pour la case secondaire après rotation.");
+            }
+            plateau.forceRefresh();
+            return;
+        }
+
+        // Normal rotation
         Direction[] dirs = {Direction.North, Direction.East, Direction.South, Direction.West};
         Direction cur = m.getDirection();
         int idx = 0;
@@ -208,12 +240,30 @@ public class Jeu extends Thread{
         Machine m = c.getMachine();
 
         if (m != null) {
-            // Empêcher la suppression si c'est le Hub uniquement
             if (m instanceof Livraison) {
                 System.out.println("Action impossible : Le Hub ne peut pas être supprimé.");
                 return;
             }
-            // Toutes les autres machines peuvent être supprimées (y compris les mines)
+
+            if (m instanceof Balancer) {
+                // Also remove secondary cell
+                int[] secPos = findBalancerSecondaire((Balancer) m);
+                if (secPos != null) {
+                    plateau.getCases()[secPos[0]][secPos[1]].getMachine().clearCurrent();
+                    plateau.getCases()[secPos[0]][secPos[1]].setMachine(null);
+                }
+            }
+
+            if (m instanceof BalancerSecondaire) {
+                // Also remove primary cell
+                Balancer owner = ((BalancerSecondaire) m).owner;
+                int[] priPos = findMachinePosition(owner);
+                if (priPos != null) {
+                    owner.clearCurrent();
+                    plateau.getCases()[priPos[0]][priPos[1]].setMachine(null);
+                }
+            }
+
             m.clearCurrent();
             System.out.println("Suppression de la machine à (" + x + "," + y + ") et de son item");
         }
@@ -222,12 +272,29 @@ public class Jeu extends Thread{
         plateau.forceRefresh();
     }
 
-    public void press(int x, int y) {
-        placerMachine(x, y, "Tapis");
+    /** Finds the grid position of a given machine instance, or null if not found. */
+    private int[] findMachinePosition(Machine target) {
+        for (int cx = 0; cx < Plateau.SIZE_X; cx++) {
+            for (int cy = 0; cy < Plateau.SIZE_Y; cy++) {
+                if (plateau.getCases()[cx][cy].getMachine() == target) {
+                    return new int[]{cx, cy};
+                }
+            }
+        }
+        return null;
     }
 
-    public void slide(int x, int y) {
-        placerMachine(x, y, "Tapis");
+    /** Finds the grid position of the BalancerSecondaire belonging to a Balancer. */
+    private int[] findBalancerSecondaire(Balancer balancer) {
+        for (int cx = 0; cx < Plateau.SIZE_X; cx++) {
+            for (int cy = 0; cy < Plateau.SIZE_Y; cy++) {
+                Machine m = plateau.getCases()[cx][cy].getMachine();
+                if (m instanceof BalancerSecondaire && ((BalancerSecondaire) m).owner == balancer) {
+                    return new int[]{cx, cy};
+                }
+            }
+        }
+        return null;
     }
 
     public void run() {

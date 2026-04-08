@@ -14,6 +14,9 @@ public enum Direction {
         dy = _dy;
     }
 
+    public int getDx() { return dx; }
+    public int getDy() { return dy; }
+
     public Direction rotate90CW() {
         switch (this) {
             case North: return East;
