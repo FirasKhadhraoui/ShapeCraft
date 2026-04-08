@@ -1,11 +1,14 @@
 package modele.item;
 
 public class ItemShape extends Item {
+    // Tableau des formes pour chaque quart (0=Haut-Droite, 1=Bas-Droite, 2=Bas-Gauche, 3=Haut-Gauche)
     private SubShape[] tabSubShapes;
+    // Tableau des couleurs pour chaque quart
     private Color[] tabColors;
-    private boolean colorItem = false; // true pour les items issus des gisements de couleur (coins)
-    private boolean cut = false;       // true après un appel à Cut()
-    public enum Layer {one, two, three};
+    // true = item de couleur pure (ex: cercle rouge)
+    private boolean colorItem = false;
+    // true = forme a été coupée par un Cutter
+    private boolean cut = false;
 
     public boolean isColorItem() { return colorItem; }
     public void setColorItem(boolean b) { this.colorItem = b; }
@@ -13,9 +16,8 @@ public class ItemShape extends Item {
     public void setCut(boolean b) { this.cut = b; }
 
     /**
-     * Retourne la moitié occupée par cet item coupé selon les quadrants remplis.
-     * Indices : 0=Haut-Droite, 1=Bas-Droite, 2=Bas-Gauche, 3=Haut-Gauche
-     * Retourne : "RIGHT" (0+1), "LEFT" (2+3), "TOP" (0+3), "BOTTOM" (1+2), ou "NONE"
+     * Détermine quelle moitié de la forme est remplie après découpe
+     * Retourne : "RIGHT", "LEFT", "TOP", "BOTTOM" ou "NONE"
      */
     public String getCutDirection() {
         if (!cut) return "NONE";
@@ -30,66 +32,43 @@ public class ItemShape extends Item {
         return "NONE";
     }
 
-    public SubShape[] getSubShapes(Layer l) {
-        switch(l) {
-            case one :
-                if (tabSubShapes.length >= 4) {
-                    return new SubShape[] {tabSubShapes[0], tabSubShapes[1], tabSubShapes[2], tabSubShapes[3]};
-                } else if (tabSubShapes.length == 2) {
-                    return new SubShape[] {tabSubShapes[0], tabSubShapes[1], SubShape.None, SubShape.None};
-                } else {
-                    return new SubShape[] {SubShape.None, SubShape.None, SubShape.None, SubShape.None};
-                }
-            case two :
-                if (tabSubShapes.length >= 8) {
-                    return new SubShape[] {tabSubShapes[4], tabSubShapes[5], tabSubShapes[6], tabSubShapes[7]};
-                } else {
-                    return new SubShape[] {SubShape.None, SubShape.None, SubShape.None, SubShape.None};
-                }
-            case three :
-                if (tabSubShapes.length >= 12) {
-                    return new SubShape[] {tabSubShapes[8], tabSubShapes[9], tabSubShapes[10], tabSubShapes[11]};
-                } else {
-                    return new SubShape[] {SubShape.None, SubShape.None, SubShape.None, SubShape.None};
-                }
-            default:
-                throw new IllegalStateException("Unexpected value: " + l);
+    /**
+     * Récupère les 4 formes (pour l'affichage)
+     */
+    public SubShape[] getSubShapes() {
+        if (tabSubShapes.length >= 4) {
+            return new SubShape[] {tabSubShapes[0], tabSubShapes[1], tabSubShapes[2], tabSubShapes[3]};
+        } else if (tabSubShapes.length == 2) {
+            return new SubShape[] {tabSubShapes[0], tabSubShapes[1], SubShape.None, SubShape.None};
+        } else {
+            return new SubShape[] {SubShape.None, SubShape.None, SubShape.None, SubShape.None};
         }
     }
 
-    public Color[] getColors(Layer l) {
-        switch(l) {
-            case one :
-                if (tabColors.length >= 4) {
-                    return new Color[] {tabColors[0], tabColors[1], tabColors[2], tabColors[3]};
-                } else if (tabColors.length == 2) {
-                    return new Color[] {tabColors[0], tabColors[1], null, null};
-                } else {
-                    return new Color[] {null, null, null, null};
-                }
-            case two :
-                if (tabColors.length >= 8) {
-                    return new Color[] {tabColors[4], tabColors[5], tabColors[6], tabColors[7]};
-                } else {
-                    return new Color[] {null, null, null, null};
-                }
-            case three :
-                if (tabColors.length >= 12) {
-                    return new Color[] {tabColors[8], tabColors[9], tabColors[10], tabColors[11]};
-                } else {
-                    return new Color[] {null, null, null, null};
-                }
-            default:
-                throw new IllegalStateException("Unexpected value: " + l);
+    /**
+     * Récupère les 4 couleurs
+     */
+    public Color[] getColors() {
+        if (tabColors.length >= 4) {
+            return new Color[] {tabColors[0], tabColors[1], tabColors[2], tabColors[3]};
+        } else if (tabColors.length == 2) {
+            return new Color[] {tabColors[0], tabColors[1], null, null};
+        } else {
+            return new Color[] {null, null, null, null};
         }
     }
 
+    /**
+     * Constructeur : crée une forme à partir d'une chaîne
+     * Exemple: "CrCb--Cb" = Carré Rouge, Carré Bleu, Vide, Carré Bleu
+     */
     public ItemShape(String str) {
         int nbQuarts = str.length() / 2;
         tabSubShapes = new SubShape[nbQuarts];
         tabColors = new Color[nbQuarts];
 
         for (int i = 0; i < nbQuarts; i++) {
+            // Lecture de la forme
             switch (str.charAt(i * 2)) {
                 case 'C' : tabSubShapes[i] = SubShape.Carre; break;
                 case 'c' : tabSubShapes[i] = SubShape.Circle; break;
@@ -100,6 +79,7 @@ public class ItemShape extends Item {
                     throw new IllegalStateException("Unexpected shape: " + str.charAt(i * 2));
             }
 
+            // Lecture de la couleur
             switch (str.charAt(i * 2 + 1)) {
                 case 'r' : tabColors[i] = Color.Red; break;
                 case 'g' : tabColors[i] = Color.Green; break;
@@ -115,6 +95,10 @@ public class ItemShape extends Item {
         }
     }
 
+    /**
+     * Rotation 90° horaire de la forme
+     * Transformation: [0,1,2,3] → [3,0,1,2]
+     */
     public void rotate() {
         if (tabSubShapes.length >= 4) {
             SubShape[] bufferSubShapes = new SubShape[4];
@@ -136,8 +120,11 @@ public class ItemShape extends Item {
         }
     }
 
+    /**
+     * Empilement (Stacker) : fusionne une autre forme dans celle-ci
+     * Remplace les vides par les formes de l'autre item
+     */
     public void stack(ItemShape other) {
-        // Merge non-None quadrants from other into this (where this has None)
         for (int i = 0; i < 4 && i < tabSubShapes.length && i < other.tabSubShapes.length; i++) {
             if (tabSubShapes[i] == SubShape.None && other.tabSubShapes[i] != SubShape.None) {
                 tabSubShapes[i] = other.tabSubShapes[i];
@@ -145,11 +132,10 @@ public class ItemShape extends Item {
             }
         }
         this.cut = false;
-        System.out.println("Stacker : combinaison → " + this.toString());
     }
 
     /**
-     * Découpe la forme horizontalement (haut/bas)
+     * Découpe (Cutter) : sépare la forme en deux parties
      * @return la partie haute (indices 0 et 1)
      * this devient la partie basse (indices 2 et 3)
      */
@@ -159,10 +145,9 @@ public class ItemShape extends Item {
             return new ItemShape("----");
         }
 
-        // Partie HAUTE (Nord) : indices 0 et 1
+        // Partie HAUTE : indices 0 et 1
         SubShape[] hautSub = new SubShape[4];
         Color[] hautColor = new Color[4];
-
         hautSub[0] = tabSubShapes[0];
         hautColor[0] = tabColors[0];
         hautSub[1] = tabSubShapes[1];
@@ -172,10 +157,9 @@ public class ItemShape extends Item {
         hautSub[3] = SubShape.None;
         hautColor[3] = null;
 
-        // Partie BASSE (Est) : indices 2 et 3
+        // Partie BASSE : indices 2 et 3
         SubShape[] basSub = new SubShape[4];
         Color[] basColor = new Color[4];
-
         basSub[0] = SubShape.None;
         basColor[0] = null;
         basSub[1] = SubShape.None;
@@ -188,11 +172,6 @@ public class ItemShape extends Item {
         String chaineHaut = construireChaine(hautSub, hautColor);
         String chaineBas = construireChaine(basSub, basColor);
 
-        System.out.println("=== DÉCOUPE HORIZONTALE ===");
-        System.out.println("Original: " + this.toString());
-        System.out.println("Partie haute (Nord): " + chaineHaut);
-        System.out.println("Partie basse (Est): " + chaineBas);
-
         ItemShape formeHaut = new ItemShape(chaineHaut);
         ItemShape formeBas = new ItemShape(chaineBas);
 
@@ -204,10 +183,10 @@ public class ItemShape extends Item {
         return formeHaut;
     }
 
+    // Convertit un tableau de formes/couleurs en chaîne
     private String construireChaine(SubShape[] subs, Color[] colors) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < subs.length; i++) {
-            // Forme
             switch (subs[i]) {
                 case Carre: sb.append('C'); break;
                 case Circle: sb.append('c'); break;
@@ -216,7 +195,6 @@ public class ItemShape extends Item {
                 case None: sb.append('-'); break;
                 default: sb.append('?');
             }
-            // Couleur
             if (colors[i] == null) {
                 sb.append('-');
             } else {
@@ -235,31 +213,20 @@ public class ItemShape extends Item {
         return sb.toString();
     }
 
+    /**
+     * Coloration (Painter) : applique une couleur à tous les blocs non vides
+     */
     public void Color(Color c) {
         for (int i = 0; i < tabColors.length; i++) {
             if (tabSubShapes[i] != SubShape.None) {
                 tabColors[i] = c;
             }
         }
-        System.out.println("Coloration en " + c);
     }
 
-    public void Color(Color c, Layer layer) {
-        int startIdx;
-        switch(layer) {
-            case one: startIdx = 0; break;
-            case two: startIdx = 4; break;
-            case three: startIdx = 8; break;
-            default: return;
-        }
-
-        for (int i = startIdx; i < startIdx + 4 && i < tabColors.length; i++) {
-            if (tabColors[i] != null) {
-                tabColors[i] = c;
-            }
-        }
-    }
-
+    /**
+     * Convertit la forme en chaîne (inverse du constructeur)
+     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

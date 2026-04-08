@@ -53,7 +53,7 @@ public class AtelierPeinture extends Machine {
     }
 
     private Color extractColor(ItemShape colorItem) {
-        for (Color c : colorItem.getColors(ItemShape.Layer.one)) {
+        for (Color c : colorItem.getColors()) {
             if (c != null) {
                 return c;
             }

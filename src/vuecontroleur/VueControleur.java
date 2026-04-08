@@ -18,7 +18,6 @@ import modele.plateau.BalancerSecondaire;
 import modele.plateau.Direction;
 import controleur.Main;
 
-
 public class VueControleur extends JFrame implements Observer {
     private Plateau plateau;
     private Jeu jeu;
@@ -469,7 +468,7 @@ public class VueControleur extends JFrame implements Observer {
 
     private Image getItemImage(ItemShape shape) {
         if (isColorItem(shape)) {
-            switch (shape.getColors(ItemShape.Layer.one)[0]) {
+            switch (shape.getColors()[0]) {
                 case Red:    return icoRed;
                 case Green:  return icoGreen;
                 case Blue:   return icoBlue;
@@ -477,7 +476,7 @@ public class VueControleur extends JFrame implements Observer {
                 default: break;
             }
         }
-        for (SubShape s : shape.getSubShapes(ItemShape.Layer.one)) {
+        for (SubShape s : shape.getSubShapes()) {
             if (s == SubShape.Carre)  return icoSquare;
             if (s == SubShape.Circle) return icoCircle;
             if (s == SubShape.Star)   return icoStar;
@@ -487,8 +486,8 @@ public class VueControleur extends JFrame implements Observer {
 
     private java.awt.Color getItemTint(ItemShape shape) {
         if (isColorItem(shape)) return null;
-        modele.item.Color[] colors = shape.getColors(ItemShape.Layer.one);
-        SubShape[] subs = shape.getSubShapes(ItemShape.Layer.one);
+        modele.item.Color[] colors = shape.getColors();
+        SubShape[] subs = shape.getSubShapes();
         for (int i = 0; i < 4; i++) {
             if (subs[i] != SubShape.None && colors[i] != null) {
                 return toAwtColor(colors[i]);

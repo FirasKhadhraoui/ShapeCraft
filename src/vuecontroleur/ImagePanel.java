@@ -76,7 +76,6 @@ public class ImagePanel extends JPanel {
 
         if (imgBackground != null) {
             Graphics2D g2d = (Graphics2D) g.create();
-            // Clip to left or right half in screen space (before rotation)
             if (backgroundHalf == BackgroundHalf.LEFT) {
                 g2d.clipRect(xBack, yBack, widthBack / 2, heigthBack);
             } else if (backgroundHalf == BackgroundHalf.RIGHT) {
@@ -92,7 +91,6 @@ public class ImagePanel extends JPanel {
         }
 
         if (imgFront != null) {
-            // Teindre l'image si une couleur est définie
             Image drawImg = imgFront;
             if (frontTint != null) {
                 BufferedImage tinted = new BufferedImage(widthFront, heigthFront, BufferedImage.TYPE_INT_ARGB);
@@ -115,28 +113,21 @@ public class ImagePanel extends JPanel {
             } else if (cutHalf == CutHalf.BOTTOM) {
                 g2d.clipRect(xFront, yFront + heigthFront / 2, widthFront, heigthFront / 2);
             }
-            if (frontTint != null) {
-                g2d.drawImage(drawImg, xFront, yFront, this);
-            } else {
-                g2d.drawImage(drawImg, xFront, yFront, widthFront, heigthFront, this);
-            }
+            g2d.drawImage(drawImg, xFront, yFront, widthFront, heigthFront, this);
             g2d.dispose();
         }
 
         if (shape != null) {
-            SubShape[] tabS = shape.getSubShapes(ItemShape.Layer.one);
-            modele.item.Color[] tabC = shape.getColors(ItemShape.Layer.one);
+            SubShape[] tabS = shape.getSubShapes();
+            modele.item.Color[] tabC = shape.getColors();
 
-            // Vérifier si la forme a 4 sous-formes (complète) ou 2 (coupée)
             int nbFormes = tabS.length;
 
             if (nbFormes == 4) {
-                // Affichage normal 2x2
                 for (int i = 0; i < 4; i++) {
                     dessinerSousForme(g, tabS[i], tabC[i], i, xFront, yFront, widthFront, heigthFront);
                 }
             } else if (nbFormes == 2) {
-                // Affichage pour forme coupée (2 sous-formes empilées verticalement)
                 for (int i = 0; i < 2; i++) {
                     dessinerSousFormeCoupe(g, tabS[i], tabC[i], i, xFront, yFront, widthFront, heigthFront);
                 }
@@ -174,7 +165,7 @@ public class ImagePanel extends JPanel {
 
     private void setColor(Graphics g, modele.item.Color color) {
         if (color == null) {
-            g.setColor(new Color(64, 64, 64)); // dark grey
+            g.setColor(new Color(64, 64, 64));
         } else {
             switch (color) {
                 case Red: g.setColor(Color.RED); break;
@@ -201,7 +192,6 @@ public class ImagePanel extends JPanel {
                 g.fillArc(x, y, w, h, 0, 90);
                 break;
             case Star:
-                // Triangle simple pour représenter une étoile
                 int[] xPoints = {x + w/2, x, x + w};
                 int[] yPoints = {y, y + h, y + h};
                 g.fillPolygon(xPoints, yPoints, 3);
