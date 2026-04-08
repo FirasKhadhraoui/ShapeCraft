@@ -39,9 +39,12 @@ public class AtelierPeinture extends Machine {
         if (colorSlot != null && shapeSlot != null && current.isEmpty()) {
             Color c = extractColor(colorSlot);
             if (c != null) {
+                // Créer une copie à partir de la chaîne
                 ItemShape painted = new ItemShape(shapeSlot.toString());
                 painted.Color(c);
                 painted.setColorItem(false);
+                // Préserver l'état coupé
+                painted.setCut(shapeSlot.isCut());
                 current.add(painted);
             }
             colorSlot = null;
