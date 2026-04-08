@@ -18,63 +18,53 @@ import modele.plateau.BalancerSecondaire;
 import modele.plateau.Direction;
 import controleur.Main;
 
+/**
+ * VueControleur : Vue + Contrôleur de l'application.
+ * - Affiche la grille et les machines
+ * - Gère les clics souris (placer, supprimer, tourner)
+ * - Gère le menu Fichier
+ * - Observe le plateau pour se mettre à jour
+ */
 public class VueControleur extends JFrame implements Observer {
-    private Plateau plateau;
-    private Jeu jeu;
-    private Main mainController;
-    private final int sizeX;
-    private final int sizeY;
-    private int pxCase;
 
-    // Images pour les couleurs des gisements
-    private Image icoRed;
-    private Image icoGreen;
-    private Image icoBlue;
-    private Image icoYellow;
+    // RÉFÉRENCES
+    private Plateau plateau;      // Le plateau de jeu
+    private Jeu jeu;              // Le contrôleur du jeu
+    private Main mainController;  // Le contrôleur principal (menu)
+    private final int sizeX;      // Largeur de la grille
+    private final int sizeY;      // Hauteur de la grille
+    private int pxCase;           // Taille d'une case en pixels
 
-    // Images pour les zones de formes
-    private Image icoSquare;
-    private Image icoCircle;
-    private Image icoStar;
+    //  IMAGES
+    // Couleurs des gisements
+    private Image icoRed, icoGreen, icoBlue, icoYellow;
+    // Formes
+    private Image icoSquare, icoCircle, icoStar;
+    // Machines
+    private Image icoTapis, icoTapisLeft, icoTapisRight, icoPoubelle, icoMine, icoHub,
+            icoCutter, icoRotater, icoPainter, icoStacker, icoBalancer;
 
-    // Images pour les machines
-    private Image icoTapis;
-    private Image icoTapisLeft;
-    private Image icoTapisRight;
-    private Image icoPoubelle;
-    private Image icoMine;
-    private Image icoHub;
-    private Image icoCutter;
-    private Image icoRotater;
-    private Image icoPainter;
-    private Image icoStacker;
-    private Image icoBalancer;
+    // BOÎTE À OUTILS
+    private JToolBar toolBar;                     // Barre verticale
+    private JButton btnMine, btnTapis, btnPoubelle, btnCutter, btnRotater, btnPainter, btnStacker, btnBalancer;
+    private String machineSelectionnee = "Tapis"; // Machine sélectionnée
 
-    // Composants de la boîte à outils
-    private JToolBar toolBar;
-    private JButton btnMine;
-    private JButton btnTapis;
-    private JButton btnPoubelle;
-    private JButton btnCutter;
-    private JButton btnRotater;
-    private JButton btnPainter;
-    private JButton btnStacker;
-    private JButton btnBalancer;
-    private String machineSelectionnee = "Tapis";
-
-    // Composants pour l'affichage des objectifs
+    // AFFICHAGE OBJECTIFS
     private JPanel topPanel;
     private JLabel objectifLabel;
     private JLabel formeAttendueLabel;
 
+    //  GRILLE
     private JPanel grilleIP;
-    private boolean mousePressed = false;
     private ImagePanel[][] tabIP;
-    private int lastBeltX = -1;
-    private int lastBeltY = -1;
+    private boolean mousePressed = false;
+
+    // Drag & drop pour les tapis
+    private int lastBeltX = -1, lastBeltY = -1;
     private Direction currentDragDirection = Direction.North;
     private Direction incomingToLast = null;
 
+    //  CONSTRUCTEUR
     public VueControleur(Jeu _jeu, Main _mainController) {
         jeu = _jeu;
         mainController = _mainController;
@@ -82,18 +72,18 @@ public class VueControleur extends JFrame implements Observer {
         sizeX = plateau.SIZE_X;
         sizeY = plateau.SIZE_Y;
 
-        calculerTailleAdaptative();
+        calculerTailleAdaptative();    // Ajuste la taille des cases
+        chargerLesIcones();            // Charge les images
+        initToolBar();                 // Crée la barre d'outils
+        placerLesComposantsGraphiques(); // Construit l'interface
+        initMenu();                    // Crée le menu Fichier
 
-        chargerLesIcones();
-        initToolBar();
-        placerLesComposantsGraphiques();
-        initMenu();
-
-        plateau.addObserver(this);
-        mettreAJourAffichage();
-        mettreAJourObjectifs();
+        plateau.addObserver(this);     // S'abonne au plateau
+        mettreAJourAffichage();        // Premier affichage
+        mettreAJourObjectifs();        // Affiche les objectifs
     }
 
+    //  MENU
     private void initMenu() {
         JMenuBar menuBar = new JMenuBar();
         JMenu fichierMenu = new JMenu("Fichier");
@@ -118,6 +108,7 @@ public class VueControleur extends JFrame implements Observer {
         setJMenuBar(menuBar);
     }
 
+    //  TAILLE ADAPTATIVE
     private void calculerTailleAdaptative() {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int maxHauteur = (int)(screenSize.height * 0.7);
@@ -126,12 +117,9 @@ public class VueControleur extends JFrame implements Observer {
         int maxCaseLargeur = maxLargeur / sizeX;
         pxCase = Math.min(maxCaseHauteur, maxCaseLargeur);
         pxCase = Math.max(40, Math.min(pxCase, 100));
-
-        System.out.println("Taille d'écran : " + screenSize.width + "x" + screenSize.height);
-        System.out.println("Taille des cases : " + pxCase + "px");
-        System.out.println("Grille totale : " + (sizeX * pxCase) + "x" + (sizeY * pxCase));
     }
 
+    //  CHARGEMENT DES IMAGES
     private void chargerLesIcones() {
         icoRed = new ImageIcon("./data/sprites/colors/red.png").getImage();
         icoGreen = new ImageIcon("./data/sprites/colors/green.png").getImage();
@@ -155,12 +143,14 @@ public class VueControleur extends JFrame implements Observer {
         icoBalancer = new ImageIcon("./data/sprites/buildings/balancer.png").getImage();
     }
 
+    // Redimensionne une icône
     private ImageIcon resizeIcon(ImageIcon icon, int width, int height) {
         Image img = icon.getImage();
         Image resizedImg = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
         return new ImageIcon(resizedImg);
     }
 
+    //  BARRE D'OUTILS
     private void initToolBar() {
         toolBar = new JToolBar("Boîte à outils", JToolBar.VERTICAL);
         toolBar.setFloatable(false);
@@ -169,6 +159,7 @@ public class VueControleur extends JFrame implements Observer {
         int btnWidth = pxCase + 10;
         int btnHeight = pxCase + 20;
 
+        // Création des icônes redimensionnées
         ImageIcon mineIcon = resizeIcon(new ImageIcon("./data/sprites/buildings/miner.png"), btnWidth - 20, btnHeight - 40);
         ImageIcon tapisIcon = resizeIcon(new ImageIcon("./data/sprites/buildings/belt_top.png"), btnWidth - 20, btnHeight - 40);
         ImageIcon poubelleIcon = resizeIcon(new ImageIcon("./data/sprites/buildings/trash.png"), btnWidth - 20, btnHeight - 40);
@@ -178,6 +169,7 @@ public class VueControleur extends JFrame implements Observer {
         ImageIcon stackerIcon = resizeIcon(new ImageIcon("./data/sprites/buildings/stacker.png"), btnWidth - 20, btnHeight - 40);
         ImageIcon balancerIcon = resizeIcon(new ImageIcon("./data/sprites/buildings/balancer.png"), btnWidth - 20, btnHeight - 40);
 
+        // Création des boutons
         btnMine = new JButton("Mine", mineIcon);
         btnTapis = new JButton("Tapis", tapisIcon);
         btnPoubelle = new JButton("Poubelle", poubelleIcon);
@@ -188,48 +180,15 @@ public class VueControleur extends JFrame implements Observer {
         btnBalancer = new JButton("Balancer", balancerIcon);
 
         Dimension buttonSize = new Dimension(btnWidth, btnHeight);
-        btnMine.setPreferredSize(buttonSize);
-        btnMine.setMaximumSize(buttonSize);
-        btnMine.setMinimumSize(buttonSize);
-        btnTapis.setPreferredSize(buttonSize);
-        btnTapis.setMaximumSize(buttonSize);
-        btnTapis.setMinimumSize(buttonSize);
-        btnPoubelle.setPreferredSize(buttonSize);
-        btnPoubelle.setMaximumSize(buttonSize);
-        btnPoubelle.setMinimumSize(buttonSize);
-        btnCutter.setPreferredSize(buttonSize);
-        btnCutter.setMaximumSize(buttonSize);
-        btnCutter.setMinimumSize(buttonSize);
-        btnRotater.setPreferredSize(buttonSize);
-        btnRotater.setMaximumSize(buttonSize);
-        btnRotater.setMinimumSize(buttonSize);
-        btnPainter.setPreferredSize(buttonSize);
-        btnPainter.setMaximumSize(buttonSize);
-        btnPainter.setMinimumSize(buttonSize);
-        btnStacker.setPreferredSize(buttonSize);
-        btnStacker.setMaximumSize(buttonSize);
-        btnStacker.setMinimumSize(buttonSize);
-        btnBalancer.setPreferredSize(buttonSize);
-        btnBalancer.setMaximumSize(buttonSize);
-        btnBalancer.setMinimumSize(buttonSize);
+        for (JButton btn : new JButton[]{btnMine, btnTapis, btnPoubelle, btnCutter, btnRotater, btnPainter, btnStacker, btnBalancer}) {
+            btn.setPreferredSize(buttonSize);
+            btn.setMaximumSize(buttonSize);
+            btn.setMinimumSize(buttonSize);
+            btn.setVerticalTextPosition(SwingConstants.BOTTOM);
+            btn.setHorizontalTextPosition(SwingConstants.CENTER);
+        }
 
-        btnMine.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnMine.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnTapis.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnTapis.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnPoubelle.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnPoubelle.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnCutter.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnCutter.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnRotater.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnRotater.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnPainter.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnPainter.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnStacker.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnStacker.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnBalancer.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnBalancer.setHorizontalTextPosition(SwingConstants.CENTER);
-
+        // Tooltips
         btnMine.setToolTipText("Mine - à placer sur un gisement");
         btnTapis.setToolTipText("Tapis - transporte les items");
         btnPoubelle.setToolTipText("Poubelle - détruit les items");
@@ -239,39 +198,17 @@ public class VueControleur extends JFrame implements Observer {
         btnStacker.setToolTipText("Stacker - empile les formes");
         btnBalancer.setToolTipText("Balancer - répartit les items entre deux sorties");
 
-        btnMine.addActionListener(e -> {
-            machineSelectionnee = "Mine";
-            System.out.println("Machine sélectionnée : Mine");
-        });
-        btnTapis.addActionListener(e -> {
-            machineSelectionnee = "Tapis";
-            System.out.println("Machine sélectionnée : Tapis");
-        });
-        btnPoubelle.addActionListener(e -> {
-            machineSelectionnee = "Poubelle";
-            System.out.println("Machine sélectionnée : Poubelle");
-        });
-        btnCutter.addActionListener(e -> {
-            machineSelectionnee = "Cutter";
-            System.out.println("Machine sélectionnée : Cutter");
-        });
-        btnRotater.addActionListener(e -> {
-            machineSelectionnee = "Rotater";
-            System.out.println("Machine sélectionnée : Rotater");
-        });
-        btnPainter.addActionListener(e -> {
-            machineSelectionnee = "Painter";
-            System.out.println("Machine sélectionnée : Painter");
-        });
-        btnStacker.addActionListener(e -> {
-            machineSelectionnee = "Stacker";
-            System.out.println("Machine sélectionnée : Stacker");
-        });
-        btnBalancer.addActionListener(e -> {
-            machineSelectionnee = "Balancer";
-            System.out.println("Machine sélectionnée : Balancer");
-        });
+        // Sélection de la machine
+        btnMine.addActionListener(e -> { machineSelectionnee = "Mine"; System.out.println("Machine sélectionnée : Mine"); });
+        btnTapis.addActionListener(e -> { machineSelectionnee = "Tapis"; System.out.println("Machine sélectionnée : Tapis"); });
+        btnPoubelle.addActionListener(e -> { machineSelectionnee = "Poubelle"; System.out.println("Machine sélectionnée : Poubelle"); });
+        btnCutter.addActionListener(e -> { machineSelectionnee = "Cutter"; System.out.println("Machine sélectionnée : Cutter"); });
+        btnRotater.addActionListener(e -> { machineSelectionnee = "Rotater"; System.out.println("Machine sélectionnée : Rotater"); });
+        btnPainter.addActionListener(e -> { machineSelectionnee = "Painter"; System.out.println("Machine sélectionnée : Painter"); });
+        btnStacker.addActionListener(e -> { machineSelectionnee = "Stacker"; System.out.println("Machine sélectionnée : Stacker"); });
+        btnBalancer.addActionListener(e -> { machineSelectionnee = "Balancer"; System.out.println("Machine sélectionnée : Balancer"); });
 
+        // Ajout à la toolbar
         toolBar.add(btnMine);
         toolBar.add(btnTapis);
         toolBar.add(btnPoubelle);
@@ -280,10 +217,10 @@ public class VueControleur extends JFrame implements Observer {
         toolBar.add(btnPainter);
         toolBar.add(btnStacker);
         toolBar.add(btnBalancer);
-
         toolBar.add(Box.createVerticalGlue());
     }
 
+    //  AFFICHAGE DES OBJECTIFS
     private void mettreAJourObjectifs() {
         if (Livraison.isTermine()) {
             objectifLabel.setText("🎉 FELICITATIONS ! 🎉");
@@ -294,51 +231,41 @@ public class VueControleur extends JFrame implements Observer {
             int numero = Livraison.getObjectifNumero();
             int recu = Livraison.getQuantiteRecue();
             int requis = Livraison.getObjectifRequis();
-
             objectifLabel.setFont(new Font("Arial", Font.BOLD, 14));
             objectifLabel.setText("Objectif " + numero + " : " + recu + " / " + requis + " items");
 
             String explication = "";
-            if (numero == 1) {
-                explication = "Objectif 1 : Carré plein";
-            } else if (numero == 2) {
-                explication = "Objectif 2 : Partie droite d'un rond";
-            } else if (numero == 3) {
-                explication = "Objectif 3 : Partie basse d'une étoile";
-            } else if (numero == 4) {
-                explication = "Objectif 4 : Partie droite d'un carré vert";
-            }
+            if (numero == 1) explication = "Objectif 1 : Carré plein";
+            else if (numero == 2) explication = "Objectif 2 : Partie droite d'un rond";
+            else if (numero == 3) explication = "Objectif 3 : Partie basse d'une étoile";
+            else if (numero == 4) explication = "Objectif 4 : Partie droite d'un carré vert";
 
             formeAttendueLabel.setFont(new Font("Arial", Font.PLAIN, 12));
             formeAttendueLabel.setText(explication);
         }
     }
 
+    //  CONSTRUCTION DE L'INTERFACE
     private void placerLesComposantsGraphiques() {
         setTitle("ShapeCraft");
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Géré par Main
 
         JPanel mainPanel = new JPanel(new BorderLayout());
 
-        // Panel du haut pour les objectifs
+        // Panel des objectifs (en haut)
         topPanel = new JPanel();
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
         topPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
         objectifLabel = new JLabel();
-        objectifLabel.setFont(new Font("Arial", Font.BOLD, 14));
         objectifLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
         formeAttendueLabel = new JLabel();
-        formeAttendueLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         formeAttendueLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
         topPanel.add(objectifLabel);
         topPanel.add(Box.createRigidArea(new Dimension(0, 2)));
         topPanel.add(formeAttendueLabel);
-
         mainPanel.add(topPanel, BorderLayout.NORTH);
 
+        // Grille des cases
         grilleIP = new JPanel(new GridLayout(sizeY, sizeX));
         tabIP = new ImagePanel[sizeX][sizeY];
 
@@ -350,21 +277,19 @@ public class VueControleur extends JFrame implements Observer {
                 iP.setMaximumSize(new Dimension(pxCase, pxCase));
                 tabIP[x][y] = iP;
 
-                final int xx = x;
-                final int yy = y;
-
+                final int xx = x, yy = y;
                 iP.addMouseListener(new MouseAdapter() {
                     @Override
                     public void mouseClicked(MouseEvent e) {
                         if (SwingUtilities.isRightMouseButton(e)) {
-                            jeu.supprimerMachine(xx, yy);
+                            jeu.supprimerMachine(xx, yy);                       // Suppression
                         } else if (machineSelectionnee.equals("Tapis")) {
-                            jeu.placerMachine(xx, yy, "Tapis", currentDragDirection);
+                            jeu.placerMachine(xx, yy, "Tapis", currentDragDirection); // Tapis
                         } else if (plateau.getCases()[xx][yy].getMachine() != null
                                 && !(plateau.getCases()[xx][yy].getMachine() instanceof Tapis)) {
-                            jeu.rotateMachine(xx, yy);
+                            jeu.rotateMachine(xx, yy);                         // Rotation
                         } else {
-                            jeu.placerMachine(xx, yy, machineSelectionnee);
+                            jeu.placerMachine(xx, yy, machineSelectionnee);     // Placement
                         }
                     }
 
@@ -374,6 +299,7 @@ public class VueControleur extends JFrame implements Observer {
                             if (SwingUtilities.isRightMouseButton(e)) {
                                 jeu.supprimerMachine(xx, yy);
                             } else if (machineSelectionnee.equals("Tapis")) {
+                                // Drag & drop pour les tapis
                                 if (lastBeltX != -1) {
                                     Direction dir = computeBeltDirection(lastBeltX, lastBeltY, xx, yy);
                                     currentDragDirection = dir;
@@ -408,7 +334,7 @@ public class VueControleur extends JFrame implements Observer {
                             jeu.placerMachine(xx, yy, "Tapis", Direction.North);
                         } else if (plateau.getCases()[xx][yy].getMachine() != null
                                 && !(plateau.getCases()[xx][yy].getMachine() instanceof Tapis)) {
-                            // ignoré — mouseClicked gère la rotation
+                            // Rotation gérée par mouseClicked
                         } else {
                             jeu.placerMachine(xx, yy, machineSelectionnee);
                         }
@@ -422,15 +348,13 @@ public class VueControleur extends JFrame implements Observer {
                         incomingToLast = null;
                     }
                 });
-
                 grilleIP.add(iP);
             }
         }
 
+        // ScrollPane avec zoom Ctrl+molette
         JScrollPane scrollPane = new JScrollPane(grilleIP);
         scrollPane.setPreferredSize(new Dimension(sizeX * pxCase + 20, sizeY * pxCase + 20));
-
-        // Ctrl+scroll = zoom, scroll normal = défilement
         scrollPane.addMouseWheelListener(e -> {
             if (e.isControlDown()) {
                 int delta = e.getWheelRotation() < 0 ? 4 : -4;
@@ -441,13 +365,13 @@ public class VueControleur extends JFrame implements Observer {
 
         mainPanel.add(toolBar, BorderLayout.WEST);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
-
         add(mainPanel);
 
         setSize(sizeX * pxCase + 150, sizeY * pxCase + 130);
         setLocationRelativeTo(null);
     }
 
+    // Zoom de la grille
     private void zoomGrille(int delta) {
         pxCase = Math.max(10, Math.min(100, pxCase + delta));
         Dimension d = new Dimension(pxCase, pxCase);
@@ -462,6 +386,7 @@ public class VueControleur extends JFrame implements Observer {
         grilleIP.repaint();
     }
 
+    // UTILITAIRES POUR L'AFFICHAGE
     private boolean isColorItem(ItemShape shape) {
         return shape.isColorItem();
     }
@@ -509,6 +434,7 @@ public class VueControleur extends JFrame implements Observer {
         }
     }
 
+    // Calcule la direction entre deux cases (pour drag & drop)
     private Direction computeBeltDirection(int fromX, int fromY, int toX, int toY) {
         int dx = toX - fromX;
         int dy = toY - fromY;
@@ -519,6 +445,7 @@ public class VueControleur extends JFrame implements Observer {
         }
     }
 
+    // Convertit une direction en angle de rotation (radians)
     private double directionToRotation(Direction d) {
         switch (d) {
             case East:  return Math.PI / 2;
@@ -528,6 +455,7 @@ public class VueControleur extends JFrame implements Observer {
         }
     }
 
+    // Vérifie si un virage est à droite
     private boolean isRightTurn(Direction incoming, Direction outgoing) {
         return (incoming == Direction.North && outgoing == Direction.East)
                 || (incoming == Direction.East  && outgoing == Direction.South)
@@ -535,6 +463,7 @@ public class VueControleur extends JFrame implements Observer {
                 || (incoming == Direction.West  && outgoing == Direction.North);
     }
 
+    // Calcule l'angle de rotation pour un tapis en coin
     private double cornerRotation(Direction incoming, Direction outgoing) {
         if (isRightTurn(incoming, outgoing)) {
             if (incoming == Direction.North) return 0;
@@ -549,9 +478,14 @@ public class VueControleur extends JFrame implements Observer {
         }
     }
 
+    //  RAFRAÎCHISSEMENT DE L'AFFICHAGE
     private void mettreAJourAffichage() {
+        int midX = sizeX / 2 - 1;
+        int midY = sizeY / 2 - 1;
+
         for (int x = 0; x < sizeX; x++) {
             for (int y = 0; y < sizeY; y++) {
+                // Réinitialisation
                 tabIP[x][y].setImageBackground(null);
                 tabIP[x][y].setFront(null);
                 tabIP[x][y].setFrontTint(null);
@@ -560,6 +494,7 @@ public class VueControleur extends JFrame implements Observer {
                 tabIP[x][y].setCutHalf(ImagePanel.CutHalf.NONE);
                 tabIP[x][y].setBackgroundHalf(ImagePanel.BackgroundHalf.NONE);
 
+                // Affichage des gisements de couleur dans les coins (2x2)
                 if (x < 2 && y < 2) {
                     tabIP[x][y].setImageBackground(icoRed);
                 } else if (x >= sizeX - 2 && y < 2) {
@@ -574,6 +509,7 @@ public class VueControleur extends JFrame implements Observer {
                 Machine m = c.getMachine();
 
                 if (m != null) {
+                    //  AFFICHAGE DE LA MACHINE
                     if (m instanceof Tapis) {
                         Tapis t = (Tapis) m;
                         if (t.isCorner()) {
@@ -608,14 +544,11 @@ public class VueControleur extends JFrame implements Observer {
                         tabIP[x][y].setImageBackground(icoBalancer);
                     }
 
+                    //  AFFICHAGE DE L'ITEM
                     Item current = m.getCurrent();
                     if (current instanceof ItemShape) {
                         ItemShape is = (ItemShape) current;
-                        if (m instanceof Livraison) {
-                            tabIP[x][y].setFront(null);
-                            tabIP[x][y].setFrontTint(null);
-                            tabIP[x][y].setCutHalf(ImagePanel.CutHalf.NONE);
-                        } else {
+                        if (!(m instanceof Livraison)) { // Le hub n'affiche pas les items
                             tabIP[x][y].setFront(getItemImage(is));
                             tabIP[x][y].setFrontTint(getItemTint(is));
                             if (is.isCut()) {
@@ -630,8 +563,7 @@ public class VueControleur extends JFrame implements Observer {
                         }
                     }
                 } else {
-                    int midX = sizeX / 2 - 1;
-                    int midY = sizeY / 2 - 1;
+                    // AFFICHAGE DES ZONES DE FORMES
                     if (x >= midX && x <= midX + 2 && y < 3) {
                         tabIP[x][y].setFront(icoSquare);
                     } else if (x >= midX && x <= midX + 2 && y >= sizeY - 3) {
@@ -642,7 +574,8 @@ public class VueControleur extends JFrame implements Observer {
                 }
             }
         }
-        // Second pass: render secondary cells for 2-cell Balancer
+
+        // Second passage : affichage des cases secondaires du Balancer
         for (int x = 0; x < sizeX; x++) {
             for (int y = 0; y < sizeY; y++) {
                 Machine m = plateau.getCases()[x][y].getMachine();
@@ -661,14 +594,12 @@ public class VueControleur extends JFrame implements Observer {
         grilleIP.repaint();
     }
 
+    //  OBSERVER 
     @Override
     public void update(Observable o, Object arg) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                mettreAJourAffichage();
-                mettreAJourObjectifs();
-            }
+        SwingUtilities.invokeLater(() -> {
+            mettreAJourAffichage();
+            mettreAJourObjectifs();
         });
     }
 }
